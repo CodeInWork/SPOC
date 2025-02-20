@@ -26,6 +26,14 @@
 % spoc - SPectra calculation tool for OCtave
 %  "#"
 %
+% if used in Visual Studio Code under Win:
+% add to Windows environmental variables: 
+%    	"QT_PLUGIN_PATH"="C:/Octave/Octave-5.1.0.0/mingw64/qt5/plugins"
+%    	"PATH"="C:/Octave/Octave-5.1.0.0/mingw64/bin"
+%
+% and modify launch.json:
+% 		"octave": "D:\\Octave\\Octave-5.1.0.0\\mingw64\\bin\\octave-gui"
+
 
 global LAST_MODIFIED = "20.11.23";
 global VERSION = "0.98.10";
@@ -146,7 +154,9 @@ global	  command_ctr=1;			% Anzahl der Abgearbeiteten + Abzuarbeitenden Befehle
 global	  mak_nr=0;				% Anzahl definierter Makros
 
 % hier den Pfad des Programmes eintragen. Wird bei install in die .octaverc geschrieben.
-global SPOC_PATH = "~/science/progs/spoc";
+global SPOC_PATH = "D:/Dokumente/SPOC/SPOC";
+global SPOC_HISTORY_PATH = "C:/Temp"
+global DEFAULT_DATA_PATH = "D:/Data"
 
 % Sicherer Modus (dafuer aber langsamer...)
 global SECURITY_MODE = 0;
@@ -178,7 +188,7 @@ global DEFAULT_COLOR = "b";			% Blue
 global AUTO_FIGURE = 1;				  % Programmgesteuerte Ausgabe   TODO
 
 % Change if necessary...
-graphics_toolkit qt               % chenged from gnuplot, PF
+graphics_toolkit qt               % changed from gnuplot, PF
 
 if ( !ispc() )
     if ( max( size( file_in_path("~/",".spocrc")  )  ) > 0)
@@ -601,7 +611,7 @@ global	  autocorr_to_plot=20;			# gibt an, bis zu welcher ordnung die AK-Funktio
 global	  baseline=0;
 global	  baseline_info='no baseline';
 global	  vals_to_plot = 5;			# fr die Rotation
-global	macro_record_start=0;
+global	  macro_record_start=0;
 
 global    SVD=1;
 global    ROTATION=2;
@@ -1336,7 +1346,7 @@ end
 
 ##############################################################################################
 #
-#		F�rs fitten von Spectren		TODO
+#		For spectra fitting		TODO
 #
 
 function y = specfit_leasqr(x, params)
@@ -1625,7 +1635,7 @@ end;
 
 if ( ispc() )
 	nargin=0;
-	message("You are running this program under MS Windows - Scripting might not work in this environment.");
+	printf ("You are running this program under MS Windows - Scripting might not work in this environment.");
 end;
 
 printf ("Spectroscopy for Octave Vs. %s\n\n  Last change: %s\n", VERSION, LAST_MODIFIED);
@@ -1649,7 +1659,7 @@ else
 		if ( USE_GUI == 1 )
 
 
-      [listenname, foldername] = uigetfile("*","Load File", sprintf("%s/",pwd()));
+      [listenname, foldername] = uigetfile("*","Load File", sprintf("%s/",DEFAULT_DATA_PATH));
 			if (length(foldername)>1)
 					cd (foldername);
 			else
@@ -1799,7 +1809,8 @@ select=1;
 %end;
 
 % File fuer Manipulation der history erstellen
-khistory_name = sprintf("C:/OctaveSkripte/spoc/tmp/spoc-history-%d", PID);
+
+khistory_name = sprintf("%s/spoc-history-%d",SPOC_HISTORY_PATH, PID)
 khistory_handle = fopen(khistory_name,"a");
 khistory_command = sprintf("history -r %s", khistory_name);
 fprintf(khistory_handle,"spoc started\n");
