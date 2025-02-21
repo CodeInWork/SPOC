@@ -182,13 +182,15 @@ global in_bench = 0;
 
 %global DEFAULT_PLOTTER="gnuplot";
 global DEFAULT_PLOTTER="qt";
+%global DEFAULT_PLOTTER="fltk";
 global FRAME_DELAY=500;
 
 global DEFAULT_COLOR = "b";			% Blue
 global AUTO_FIGURE = 1;				  % Programmgesteuerte Ausgabe   TODO
 
-% Change if necessary...
-graphics_toolkit qt               		% changed from gnuplot, PF
+% activate chosen graphics toolkit
+graphics_toolkit(DEFAULT_PLOTTER);               		
+
 
 if ( !ispc() )
     if ( max( size( file_in_path("~/",".spocrc")  )  ) > 0)
@@ -5339,6 +5341,7 @@ case {"cut" }
 #
   case {"plot" "p" }	# Zentrale Plotfunktion
     von=1; bis=1;
+	plot_active=1;
     if (eing_num>1)
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%				<plot globalfit>
       	if ( strcmp(substring(eingaben,2),"globalfit") || strcmp(substring(eingaben,2),"gf") || strcmp(substring(eingaben,2),"glf") )
@@ -6523,10 +6526,20 @@ case {"cut" }
           printf("  set PRINTOUT_FONT=\"-F:12\" for optimal printout (JPG/PNG)\n");
           printf("  Plot-Styles: CORR_MODE=1 | 2 | 3\n");
       else
-	printf("  Falsches Argument. Syntax: plot v [Anzahl Spektren]\n");
+		printf("  Falsches Argument. Syntax: plot v [Anzahl Spektren]\n");
       endif;
-    else printf("  Argument fehlt. ? plot fuer Hilfe\n");
+    	else printf("  Argument fehlt. ? plot fuer Hilfe\n");
+		plot_active=0;
     endif;
+
+	if (plot_active)
+		printf("	close current plot window before proceeding...");
+		pause(1)
+		while (waitforbuttonpress()==0) pause(0.5) endwhile;
+	endif;
+
+
+
 
 #
 #	Ende Plot
@@ -8430,84 +8443,85 @@ case {"cut" }
           printf("    Current values: %d, %d\n",COS_TRESHOLD_SYN*100, COS_TRESHOLD_ASYN*100);
 
       else
-          fvon=str2num(substring(eingaben,2));
-          fbis=str2num(substring(eingaben,3));
-          tvon=str2num(substring(eingaben,4));
-          tbis=str2num(substring(eingaben,5));
-          [startwert, realsta_wz] = ir_get_index(fvon,freqvec);
-	        [stopwert, realsto_wz] = ir_get_index(fbis,freqvec);
-	        if (stopwert<startwert)
-	          h=stopwert; stopwert=startwert; startwert=h; end;
-	        new_freqvec = freqvec(startwert:stopwert);
-	        new_mdata=mdata(startwert:stopwert,:);
-          start_index = time_get_index(tvon, timevec);
-    	    stop_index = time_get_index(tbis, timevec);
-          new_timevec = timevec(start_index:stop_index);
-          new_mdata = new_mdata(:,start_index:stop_index);
-          % auf neue Plaetze speichern für 2Dcos
-          if ( loaded_files == 0 )
-              loaded_files++;
-	            listenname_a{loaded_files} = listenname;
-	            timevec_a{loaded_files} = timevec;
-	            freqvec_a{loaded_files} = freqvec;
-	            mdata_a{loaded_files} = mdata;
-	            startindex_a{loaded_files} = REACTION_START_INDEX;
-	            infofield_a{loaded_files} = infofield;
-		          number_a = 1;
-	        end;
-          % Synchronous Part
-          new_mdata=new_mdata-new_mdata(:,1);      % reference to 1st sectrum in set
-        	loaded_files++;
-	        listenname_a{loaded_files} = listenname;
-	        timevec_a{loaded_files} = new_timevec;
-	        freqvec_a{loaded_files} = new_freqvec;
-	        mdata_a{loaded_files} = new_mdata;
-          time_axis_a{loaded_files} = wavenumber_axis;
-          wavenumber_axis_a{loaded_files} = wavenumber_axis;
-	        startindex_a{loaded_files} = REACTION_START_INDEX;
-	        infofield_a{loaded_files}.info = "2DCos Sync";
-          infofield_a{loaded_files}.datatype = "2D Spectrum sync";
-          l=length(timevec_a{loaded_files});
-		      mdata_a{loaded_files}=mdata_a{loaded_files}(:,2:l)*mdata_a{loaded_files}(:,2:l)'/(l-2);
-          MAXVAL=max(max(mdata_a{loaded_files}));
-          % Set to zero if below the noise level!
-          mdata_a{loaded_files}(abs(mdata_a{loaded_files})<COS_TRESHOLD_SYN*MAXVAL)=0;
-          timevec_a{loaded_files}=freqvec_a{loaded_files};
+		fvon=str2num(substring(eingaben,2));
+		fbis=str2num(substring(eingaben,3));
+		tvon=str2num(substring(eingaben,4));
+		tbis=str2num(substring(eingaben,5));
+		[startwert, realsta_wz] = ir_get_index(fvon,freqvec);
+		[stopwert, realsto_wz] = ir_get_index(fbis,freqvec);
+		if (stopwert<startwert)
+			h=stopwert; stopwert=startwert; startwert=h; 
+		endif;
+		new_freqvec = freqvec(startwert:stopwert);
+		new_mdata=mdata(startwert:stopwert,:);
+		start_index = time_get_index(tvon, timevec);
+		stop_index = time_get_index(tbis, timevec);
+		new_timevec = timevec(start_index:stop_index);
+		new_mdata = new_mdata(:,start_index:stop_index);
+		% auf neue Plaetze speichern für 2Dcos
+		if ( loaded_files == 0 )
+			loaded_files++;
+			listenname_a{loaded_files} = listenname;
+			timevec_a{loaded_files} = timevec;
+			freqvec_a{loaded_files} = freqvec;
+			mdata_a{loaded_files} = mdata;
+			startindex_a{loaded_files} = REACTION_START_INDEX;
+			infofield_a{loaded_files} = infofield;
+			number_a = 1;
+		end;
+		% Synchronous Part
+		new_mdata=new_mdata-new_mdata(:,1);      % reference to 1st sectrum in set
+		loaded_files++;
+		listenname_a{loaded_files} = listenname;
+		timevec_a{loaded_files} = new_timevec;
+		freqvec_a{loaded_files} = new_freqvec;
+		mdata_a{loaded_files} = new_mdata;
+		time_axis_a{loaded_files} = wavenumber_axis;
+		wavenumber_axis_a{loaded_files} = wavenumber_axis;
+		startindex_a{loaded_files} = REACTION_START_INDEX;
+		infofield_a{loaded_files}.info = "2DCos Sync";
+		infofield_a{loaded_files}.datatype = "2D Spectrum sync";
+		l=length(timevec_a{loaded_files});
+		mdata_a{loaded_files}=mdata_a{loaded_files}(:,2:l)*mdata_a{loaded_files}(:,2:l)'/(l-2);
+		MAXVAL=max(max(mdata_a{loaded_files}));
+		% Set to zero if below the noise level!
+		mdata_a{loaded_files}(abs(mdata_a{loaded_files})<COS_TRESHOLD_SYN*MAXVAL)=0;
+		timevec_a{loaded_files}=freqvec_a{loaded_files};
 
-          % ASynchronous Part
-        	loaded_files++;
-	        listenname_a{loaded_files} = listenname;
-	        timevec_a{loaded_files} = new_timevec;
-	        freqvec_a{loaded_files} = new_freqvec;
-          time_axis_a{loaded_files} = wavenumber_axis;
-          wavenumber_axis_a{loaded_files} = wavenumber_axis;
-	        mdata_a{loaded_files} = new_mdata;
-	        startindex_a{loaded_files} = REACTION_START_INDEX;
-	        infofield_a{loaded_files}.info = "2DCos ASync";
-          infofield_a{loaded_files}.datatype = "2D Spectrum async";
-          l=length(timevec_a{loaded_files});
-		      hm=hilbert_noda_matrix(l);
-          % ATTENTION TODO POSSIBLE ERROR: check why this has to be transposed!
-          mdata_a{loaded_files}=(mdata_a{loaded_files}(:,2:l)*hm*mdata_a{loaded_files}(:,2:l)'/(l-2))';
-          MAXVAL=max(max(mdata_a{loaded_files}));
-          mdata_a{loaded_files}(abs(mdata_a{loaded_files})<COS_TRESHOLD_ASYN*MAXVAL)=0;
-          timevec_a{loaded_files}=freqvec_a{loaded_files};  %'
+		% ASynchronous Part
+		loaded_files++;
+		listenname_a{loaded_files} = listenname;
+		timevec_a{loaded_files} = new_timevec;
+		freqvec_a{loaded_files} = new_freqvec;
+		time_axis_a{loaded_files} = wavenumber_axis;
+		wavenumber_axis_a{loaded_files} = wavenumber_axis;
+		mdata_a{loaded_files} = new_mdata;
+		startindex_a{loaded_files} = REACTION_START_INDEX;
+		infofield_a{loaded_files}.info = "2DCos ASync";
+		infofield_a{loaded_files}.datatype = "2D Spectrum async";
+		l=length(timevec_a{loaded_files});
+		hm=hilbert_noda_matrix(l);
+		% ATTENTION TODO POSSIBLE ERROR: check why this has to be transposed!
+		mdata_a{loaded_files}=(mdata_a{loaded_files}(:,2:l)*hm*mdata_a{loaded_files}(:,2:l)'/(l-2))';
+		MAXVAL=max(max(mdata_a{loaded_files}));
+		mdata_a{loaded_files}(abs(mdata_a{loaded_files})<COS_TRESHOLD_ASYN*MAXVAL)=0;
+		timevec_a{loaded_files}=freqvec_a{loaded_files};  %'
 
-          % Multiply for sign
-        	loaded_files++;
-	        listenname_a{loaded_files} = listenname;
-	        timevec_a{loaded_files} = new_timevec;
-	        freqvec_a{loaded_files} = new_freqvec;
-          time_axis_a{loaded_files} = wavenumber_axis;
-          wavenumber_axis_a{loaded_files} = wavenumber_axis;
-	        startindex_a{loaded_files} = REACTION_START_INDEX;
-	        infofield_a{loaded_files}.info = "2DCos SIGN";
-          infofield_a{loaded_files}.datatype = "2D Spectrum SIGN";
-          l=length(timevec_a{loaded_files});
-          % ATTENTION TODO POSSIBLE ERROR: check why this has to be transposed!
-          mdata_a{loaded_files}=mdata_a{loaded_files-2}.*mdata_a{loaded_files-1};
-          timevec_a{loaded_files}=freqvec_a{loaded_files};
-          printf("  2D correlation set calculated. Values in %d - %d.\n",loaded_files-2,loaded_files);
+		% Multiply for sign
+		loaded_files++;
+		listenname_a{loaded_files} = listenname;
+		timevec_a{loaded_files} = new_timevec;
+		freqvec_a{loaded_files} = new_freqvec;
+		time_axis_a{loaded_files} = wavenumber_axis;
+		wavenumber_axis_a{loaded_files} = wavenumber_axis;
+		startindex_a{loaded_files} = REACTION_START_INDEX;
+		infofield_a{loaded_files}.info = "2DCos SIGN";
+		infofield_a{loaded_files}.datatype = "2D Spectrum SIGN";
+		l=length(timevec_a{loaded_files});
+		% ATTENTION TODO POSSIBLE ERROR: check why this has to be transposed!
+		mdata_a{loaded_files}=mdata_a{loaded_files-2}.*mdata_a{loaded_files-1};
+		timevec_a{loaded_files}=freqvec_a{loaded_files};
+		printf("  2D correlation set calculated. Values in %d - %d.\n",loaded_files-2,loaded_files);
       end;
 
   case {"2dcossimplify"}
