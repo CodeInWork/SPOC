@@ -5778,6 +5778,9 @@ case {"cut" }
 			clear plot_dat_1;clear plot_dat;clear plot_kin;clear plot_wzv;
 			if(LOG_KINETICS)
 				%scaling for logarithmic plot
+				if (!REACTION_START_INDEX)
+					REACTION_START_INDEX = 1;
+				endif;
 				if length(timevec)>x_resolution
 					i=1; j=1;k=0;l=1;							% Kinetiken reduzieren
 					printf("  Skaliert Kinetik...\n"); fflush(stdout);
@@ -5977,272 +5980,272 @@ case {"cut" }
 			kin_plot_label=substring(eingaben,4);
 		end;
 		if (eing_num==2)							% keine Angaben gemacht, alles abfragen
-		subplot(1,1,1);
-		printf("  Syntax:\n");
-		printf("    plot ok\n");
-		printf("    plot ok wl\n");
-		printf("    plot ok wl1 wl2 wl3 ....\n");
-		printf("    plot ok wl1 - wl2\n\n");
-		von=input("  Plottet Kinetik von (WZ):");
-		bis=input("                  bis (WZ):");
-		[von_index, von_wz] = ir_get_index(von, freqvec);
-		[bis_index, bis_wz] = ir_get_index(bis, freqvec);		# noch vertauschen. wenn n�tig....
-		oplot=mdata(von_index:bis_index,:);
-		oplot=oplot';
-		for i=2:(bis_index - von_index)
-		oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
-		endfor
-		if ( LOG_KINETICS==0 )
-			plot(timevec,oplot(:,:));
-		else
-			semilogx(timevec,oplot(:,:));
-		end;
-		xlabel(time_axis);
-		ylabel(intensity_axis);
-		elseif ( (eing_num == 3) || length(kin_plot_label)>0)						% nur 1 WL plotten
-		[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
-		printf("  Vec %d (%f)\n", von_index, von_wz);
-		if (length(kin_plot_label)==0)
-			kin_plot_label=sprintf("%s-;%d cm^{-1};", DEFAULT_COLOR, von_wz);
-		else
-			kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
-		end;
+			subplot(1,1,1);
+			printf("  Syntax:\n");
+			printf("    plot ok\n");
+			printf("    plot ok wl\n");
+			printf("    plot ok wl1 wl2 wl3 ....\n");
+			printf("    plot ok wl1 - wl2\n\n");
+			von=input("  Plottet Kinetik von (WZ):");
+			bis=input("                  bis (WZ):");
+			[von_index, von_wz] = ir_get_index(von, freqvec);
+			[bis_index, bis_wz] = ir_get_index(bis, freqvec);		# noch vertauschen. wenn n�tig....
+			oplot=mdata(von_index:bis_index,:);
+			oplot=oplot';
+			for i=2:(bis_index - von_index)
+			oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
+			endfor
 			if ( LOG_KINETICS==0 )
-				plot(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+				plot(timevec,oplot(:,:));
 			else
-				semilogx(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+				semilogx(timevec,oplot(:,:));
 			end;
-		xlabel(time_axis);
-		ylabel(intensity_axis);
-	elseif ( strcmp(substring(eingaben,3),"r") )          % Ratio plotten
-		[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,4)), freqvec);
-		[von_index1, von_wz1] = ir_get_index(str2num(substring(eingaben,5)), freqvec);
-		printf("  Vec %d (%f) / Vec %d (%f)\n", von_index, von_wz, von_index1, von_wz1);
-		if (length(kin_plot_label)==0)
-			kin_plot_label=sprintf("%s-;%d/%d cm^{-1};", DEFAULT_COLOR, von_wz, von_wz1);
+			xlabel(time_axis);
+			ylabel(intensity_axis);
+			elseif ( (eing_num == 3) || length(kin_plot_label)>0)						% nur 1 WL plotten
+			[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
+			printf("  Vec %d (%f)\n", von_index, von_wz);
+			if (length(kin_plot_label)==0)
+				kin_plot_label=sprintf("%s-;%d cm^{-1};", DEFAULT_COLOR, von_wz);
+			else
+				kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
+			end;
+				if ( LOG_KINETICS==0 )
+					plot(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+				else
+					semilogx(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+				end;
+			xlabel(time_axis);
+			ylabel(intensity_axis);
+		elseif ( strcmp(substring(eingaben,3),"r") )          % Ratio plotten
+			[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,4)), freqvec);
+			[von_index1, von_wz1] = ir_get_index(str2num(substring(eingaben,5)), freqvec);
+			printf("  Vec %d (%f) / Vec %d (%f)\n", von_index, von_wz, von_index1, von_wz1);
+			if (length(kin_plot_label)==0)
+				kin_plot_label=sprintf("%s-;%d/%d cm^{-1};", DEFAULT_COLOR, von_wz, von_wz1);
+			else
+				kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
+			endif;
+			if ( LOG_KINETICS==0 )
+				plot(timevec, mdata(von_index,:)'./mdata(von_index1,:)', kin_plot_label,'linewidth',2);
+			else
+				semilogx(timevec, mdata(von_index,:)'./mdata(von_index1,:)', kin_plot_label,'linewidth',2);
+			endif;
+			xlabel(time_axis);
+			ylabel(intensity_axis);
 		else
-			kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
-		endif;
-		if ( LOG_KINETICS==0 )
-			plot(timevec, mdata(von_index,:)'./mdata(von_index1,:)', kin_plot_label,'linewidth',2);
-		else
-			semilogx(timevec, mdata(von_index,:)'./mdata(von_index1,:)', kin_plot_label,'linewidth',2);
-		endif;
-		xlabel(time_axis);
-		ylabel(intensity_axis);
-		else
-	        if ( strcmp(substring(eingaben,4),"-"))     				% TODO: in diesem Fall ebenfalls nur in eine Grafik plotten
-		        subplot(1,1,1);
-		        von = str2num(substring(eingaben,3));
-		        bis = str2num(substring(eingaben,5));
-		        [von_index, von_wz] = ir_get_index(von, freqvec);
-		        [bis_index, bis_wz] = ir_get_index(bis, freqvec);		# noch vertauschen. wenn n�tig....
-		        oplot=mdata(von_index:bis_index,:);
-		        oplot=oplot';
-        	  for i=2:(bis_index - von_index)
-        	    oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
-        	  endfor
-		        if ( LOG_KINETICS==0 )
-			        plot(timevec,oplot(:,:));
-		        else
-			        semilogx(timevec,oplot(:,:));
-		        end;
-		        xlabel(time_axis);
-		        ylabel(intensity_axis);
-	        elseif ( strcmp(substring(eingaben,eing_num-3),"from") || strcmp(substring(eingaben,eing_num-3),"f") )				% nur bestimmten Zeitbereich plotten
-		        t_start = str2num(substring(eingaben,eing_num-2));										% darf nur bei eing_num>=4 ausgeführt werden
-		        t_stop  = str2num(substring(eingaben,eing_num));
-		        data_to_plot = eing_num - 6;
-		        t_von = time_get_index(t_start, timevec);
-		        t_bis = time_get_index(t_stop, timevec);
-		        for i=1:data_to_plot
-		          plot_wz = str2num(substring(eingaben,2+i));
-		          [plot_idx, plot_wz] = ir_get_index(plot_wz, freqvec);
-		          plot_label=sprintf("-;%d cm1;%d", plot_wz, mod(i,5));
-		          if ( LOG_KINETICS==0 )
-			          plot(timevec(t_von:t_bis), mdata(plot_idx,t_von:t_bis), plot_label);
-		          else
-			          semilogx(timevec(t_von:t_bis), mdata(plot_idx,t_von:t_bis), plot_label);
-		          end;
-		          hold on;
-		        end;
-		        xlabel(time_axis);
-		        ylabel(intensity_axis);
-	        else						% 		verschiedene Wellenzahlen angegeben
-		        % clf();
-		        data_to_plot = eing_num - 2;
-        	  von = 1;
-		        bis = data_to_plot;
-		        if ( bis <= 3 )
-		          pspalten = bis;
-		          pzeilen = 1;
-		        else
-  		        pspalten = 3;
-		          pzeilen = roundup(bis / pspalten);
-		        endif;
+			if ( strcmp(substring(eingaben,4),"-"))     				% TODO: in diesem Fall ebenfalls nur in eine Grafik plotten
+				subplot(1,1,1);
+				von = str2num(substring(eingaben,3));
+				bis = str2num(substring(eingaben,5));
+				[von_index, von_wz] = ir_get_index(von, freqvec);
+				[bis_index, bis_wz] = ir_get_index(bis, freqvec);		# noch vertauschen. wenn n�tig....
+				oplot=mdata(von_index:bis_index,:);
+				oplot=oplot';
+				for i=2:(bis_index - von_index)
+					oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
+				endfor
+				if ( LOG_KINETICS==0 )
+					plot(timevec,oplot(:,:));
+				else
+					semilogx(timevec,oplot(:,:));
+				endif;
+				xlabel(time_axis);
+				ylabel(intensity_axis);
+			elseif ( strcmp(substring(eingaben,eing_num-3),"from") || strcmp(substring(eingaben,eing_num-3),"f") )				% nur bestimmten Zeitbereich plotten
+				t_start = str2num(substring(eingaben,eing_num-2));										% darf nur bei eing_num>=4 ausgeführt werden
+				t_stop  = str2num(substring(eingaben,eing_num));
+				data_to_plot = eing_num - 6;
+				t_von = time_get_index(t_start, timevec);
+				t_bis = time_get_index(t_stop, timevec);
+				for i=1:data_to_plot
+					plot_wz = str2num(substring(eingaben,2+i));
+					[plot_idx, plot_wz] = ir_get_index(plot_wz, freqvec);
+					plot_label=sprintf("-;%d cm1;%d", plot_wz, mod(i,5));
+						if ( LOG_KINETICS==0 )
+							plot(timevec(t_von:t_bis), mdata(plot_idx,t_von:t_bis), plot_label);
+						else
+							semilogx(timevec(t_von:t_bis), mdata(plot_idx,t_von:t_bis), plot_label);
+						endif;
+					hold on;
+				endfor;
+				xlabel(time_axis);
+				ylabel(intensity_axis);
+			else						% 		verschiedene Wellenzahlen angegeben
+				% clf();
+				data_to_plot = eing_num - 2;
+				von = 1;
+				bis = data_to_plot;
+				if ( bis <= 3 )
+				pspalten = bis;
+				pzeilen = 1;
+				else
+				pspalten = 3;
+				pzeilen = roundup(bis / pspalten);
+				endif;
 
-		        for i=von:bis
-		          [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,2+i)), freqvec);
-		          printf("  Vec %d (%f)\n", von_index, von_wz);
-		          if ( strcmp(DEFAULT_PLOTTER,"grace") )
-			          hold on;
-			          %plot_label=sprintf("-;%d cm-1;%d", von_wz, mod(i,5));
-			          subplot(1,1,1);
-			          plot_label=sprintf("-;%d cm1;%d", von_wz, mod(i,5));
-			          plot(timevec, mdata(von_index,:)', plot_label);
-		          else
-			          subplot(pzeilen, pspalten, ((i-von)+1) );
-			          plot_label=sprintf("%d cm^{-1}", von_wz);
-			          if ( LOG_KINETICS==0 )
-				          plot(timevec, mdata(von_index,:)', 'linewidth', 2, 'color', [0.1,0.1,0.9]);
-			          else
-				          semilogx(timevec, mdata(von_index,:)', 'linewidth', 2, 'color', [0.1,0.1,0.9]);
-			          end;
-			          legend(plot_label);
-		          endif;
-		          xlabel(time_axis);
-		          ylabel(intensity_axis);
-		        endfor;
-	        endif;
-	      endif;
+				for i=von:bis
+					[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,2+i)), freqvec);
+					printf("  Vec %d (%f)\n", von_index, von_wz);
+					if ( strcmp(DEFAULT_PLOTTER,"grace") )
+						hold on;
+						%plot_label=sprintf("-;%d cm-1;%d", von_wz, mod(i,5));
+						subplot(1,1,1);
+						plot_label=sprintf("-;%d cm1;%d", von_wz, mod(i,5));
+						plot(timevec, mdata(von_index,:)', plot_label);
+					else
+						subplot(pzeilen, pspalten, ((i-von)+1) );
+						plot_label=sprintf("%d cm^{-1}", von_wz);
+						if ( LOG_KINETICS==0 )
+							plot(timevec, mdata(von_index,:)', 'linewidth', 2, 'color', [0.1,0.1,0.9]);
+						else
+							semilogx(timevec, mdata(von_index,:)', 'linewidth', 2, 'color', [0.1,0.1,0.9]);
+						end;
+						legend(plot_label);
+					endif;
+					xlabel(time_axis);
+					ylabel(intensity_axis);
+				endfor;
+			endif;
+		endif;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%       </plot k>
 
 
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-      elseif ( strcmp(substring(eingaben,2),"s" ))				# SVD - Singulaerwerte s
+	elseif ( strcmp(substring(eingaben,2),"s" ))				# SVD - Singulaerwerte s
         if ( eing_num==3 )
-          if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; end;
-          if (AUTO_FIGURE==1), fig(FIG_SINGULAR); end;
-	  clf();
-	  hold off;
-	  for i=1:3
-	    subplot (3,1,1);
-	    clf();
-	  end
-	  subplot (3,1,1);
-	  vals_to_plot = str2num(substring(eingaben,3));
-	  printf("vals_to_plot=%d\n", vals_to_plot);
-	  plotvec=zeros(1,vals_to_plot);
-	  for i=1:vals_to_plot
-	    plotvec(i) = diag(s)(i);
-	  endfor;
-	  bar (plotvec);
-	  xlabel(s_x_axis);
-	  ylabel(s_y_axis);
-	  title("Singular Values");
-
-	  subplot (3,1,2);
-	  plotvec=zeros(1,vals_to_plot);
-	  for i=1:autocorr_to_plot
-	    plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
-	  end
-	  bar (plotvec');
-	  title("Autocorrelation of U");
-	  xlabel('component number');
-	  ylabel('value');
-	  subplot (3,1,3);
-	  plotvec=zeros(1,vals_to_plot);
-	  for i=1:autocorr_to_plot
-	    plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
-	  end
-	  bar (plotvec');
-	  title("Autocorrelation of V");
-	  xlabel('component number');
-	  ylabel('value');
-	  if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; end;
-	else
-	  printf("  Syntax: plot s <nr>\n");
-	endif;
-
-      elseif ( strcmp(substring(eingaben,2),"fit" ))				# Die gefitteten Daten
-							# plot(freqvec, fit_parameters(3,:)) plottet die Kinetiken.
-            printf ("   Fit Plotten\n");
-	    if ( is_fit > 0 )
-		if (eing_num == 2)				# Einzelfits Plotten
-							# noch Pr�fen dass nicht zuviel Fits vorliegen
-		  data_to_plot = is_fit;
-		  von = 1; bis = data_to_plot;
-
-		  if ( data_to_plot < 19 )
-		    pspalten = 3;
-		    pzeilen = roundup(bis/pspalten);
-		    if (AUTO_FIGURE==1), figure (FIG_FIT_KINETICS); end;
-		    hold off;
-		    for i=von:bis
-			subplot(pzeilen, pspalten, ((i-von)+1) );
-			line(timevec, mdata(index_to_fit(i),:), "linewidth", 1,"color", [0.1,0.1,0.8]);	# Daten Blau
-			hold on;
-			line(timevec, fit(i).values, "linewidth", 2,"color", [0.8,0.1,0.1]);	# Fit Rot
-			l{1}=sprintf("%d cm^{-1}", wz_to_fit(i));
-			l{2}=sprintf("k=%f", fit(i).parameters(3));
-			legend(l);
+			if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; end;
+			if (AUTO_FIGURE==1), fig(FIG_SINGULAR); end;
+			clf();
 			hold off;
-			printf("%s",fit(i).report);
-		    endfor;
-		  else
-		    printf("  Es liegen zuviele Fits vor.\n  Bitte <<plot fit values wz1 wz2 wz3 ...>> benutzen!\n");
-		  endif;
+			for i=1:3
+				subplot (3,1,1);
+				clf();
+			end
+			subplot (3,1,1);
+			vals_to_plot = str2num(substring(eingaben,3));
+			printf("vals_to_plot=%d\n", vals_to_plot);
+			plotvec=zeros(1,vals_to_plot);
+			for i=1:vals_to_plot
+				plotvec(i) = diag(s)(i);
+			endfor;
+			bar (plotvec);
+			xlabel(s_x_axis);
+			ylabel(s_y_axis);
+			title("Singular Values");
+
+			subplot (3,1,2);
+			plotvec=zeros(1,vals_to_plot);
+			for i=1:autocorr_to_plot
+				plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
+			end
+			bar (plotvec');
+			title("Autocorrelation of U");
+			xlabel('component number');
+			ylabel('value');
+			subplot (3,1,3);
+			plotvec=zeros(1,vals_to_plot);
+			for i=1:autocorr_to_plot
+				plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
+			end
+			bar (plotvec');
+			title("Autocorrelation of V");
+			xlabel('component number');
+			ylabel('value');
+			if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; end;
+		else
+	  		printf("  Syntax: plot s <nr>\n");
+		endif;
+
+	elseif ( strcmp(substring(eingaben,2),"fit" ))				# Die gefitteten Daten
+		# plot(freqvec, fit_parameters(3,:)) plottet die Kinetiken.
+		printf ("   Fit Plotten\n");
+	    if ( is_fit > 0 )
+			if (eing_num == 2)				# Einzelfits Plotten
+							# noch Pr�fen dass nicht zuviel Fits vorliegen
+		  	data_to_plot = is_fit;
+		  	von = 1; bis = data_to_plot;
+
+			if ( data_to_plot < 19 )
+				pspalten = 3;
+				pzeilen = roundup(bis/pspalten);
+				if (AUTO_FIGURE==1), figure (FIG_FIT_KINETICS); end;
+				hold off;
+				for i=von:bis
+					subplot(pzeilen, pspalten, ((i-von)+1) );
+					line(timevec, mdata(index_to_fit(i),:), "linewidth", 1,"color", [0.1,0.1,0.8]);	# Daten Blau
+					hold on;
+					line(timevec, fit(i).values, "linewidth", 2,"color", [0.8,0.1,0.1]);	# Fit Rot
+					l{1}=sprintf("%d cm^{-1}", wz_to_fit(i));
+					l{2}=sprintf("k=%f", fit(i).parameters(3));
+					legend(l);
+					hold off;
+					printf("%s",fit(i).report);
+				endfor;
+			else
+				printf("  Es liegen zuviele Fits vor.\n  Bitte <<plot fit values wz1 wz2 wz3 ...>> benutzen!\n");
+			endif;
 		elseif ( strcmp(substring(eingaben,3),"3d") )			# Die Fitergebnisse als 3D Feld
 		    # mesh ( timevec, freqvec, mdata);
 		    for i=1:length(wz_to_fit)
-		      plotmatrix(i,:) = fit(i).values;
+		      	plotmatrix(i,:) = fit(i).values;
 		    endfor;
 		    mesh ( timevec, wz_to_fit, plotmatrix);
 		    #clear plotmatrix;
 		elseif ( strcmp(substring(eingaben,3),"parameter") )		# k's plotten
-		  if ( eing_num == 4 )
-		    %
-		    % TODO:     RESTRICT_RSQUARE!!
-		    %
-		    parameternr = str2num(substring(eingaben,4));
-		    printf("  Plottet Parameter Nr. %d\n",parameternr);
-		    if ( RESTRICT_RSQUARE > 0 )
-			printf ("  r_square > %f\n", RESTRICT_RSQUARE);
-		    endif;
-		    #restrict_min=0; restrict_max=10;				# erstmal nur in dem Bereich
-		    fpp=0;
-		    wpp=0;
-		    j=1;							# noch pr�fen, ob der bereich stimmt
-		    for i=1:length(wz_to_fit)					# RESTRICTIONS kontrollieren!!
-			if ( fit(i).rsquare > RESTRICT_RSQUARE )
-			    fpp(j) = fit(i).parameters(parameternr);
-			    wpp(j) = fit(i).wavenumber;
-			    j=j+1;
-			endif;
-		    endfor;
-		    printf("  %d von %d Werten werden angezeigt\n", j, i);
-		    fig(FIT_PARAMETER+parameternr);
-    		    plot(wpp, fpp, '1+-');
-		    xlabel (wavenumber_axis);
-		    ylabel (parameter_axis);
-		    flipx();
-		    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-		  elseif ( eing_num > 4 )                                       # dann alle in 1
-		    fig(FIT_PARAMETER);
-		    clf();
-		    hold on;
-		    for j=1:(eing_num-3)
-			parameternr = str2num(substring(eingaben,4));
-			clear fpp;							# noch pr�fen, ob der bereich stimmt
-			for i=1:length(wz_to_fit)					# RESTRICTIONS kontrollieren!!
-		    	    fpp(j) = fit(j).parameters(parameternr);
-			endfor;
-    			plot(wz_to_fit, fpp, '1+-');
-		    endfor;
-		    xlabel (wavenumber_axis);
-		    ylabel (parameter_axis);
-		    flipx();
-		    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-		  else
-		    printf("  Sytax: plot fit parameter <<nr>>\n");
-		    printf("  Parameter: 1 - %d\n", length(fit(1).parameters));
-		  endif;
+		  	if ( eing_num == 4 )
+				%
+				% TODO:     RESTRICT_RSQUARE!!
+				%
+				parameternr = str2num(substring(eingaben,4));
+				printf("  Plottet Parameter Nr. %d\n",parameternr);
+				if ( RESTRICT_RSQUARE > 0 )
+					printf ("  r_square > %f\n", RESTRICT_RSQUARE);
+				endif;
+				#restrict_min=0; restrict_max=10;				# erstmal nur in dem Bereich
+				fpp=0;
+				wpp=0;
+				j=1;							# noch pr�fen, ob der bereich stimmt
+				for i=1:length(wz_to_fit)					# RESTRICTIONS kontrollieren!!
+					if ( fit(i).rsquare > RESTRICT_RSQUARE )
+						fpp(j) = fit(i).parameters(parameternr);
+						wpp(j) = fit(i).wavenumber;
+						j=j+1;
+					endif;
+				endfor;
+				printf("  %d von %d Werten werden angezeigt\n", j, i);
+				fig(FIT_PARAMETER+parameternr);
+				plot(wpp, fpp, '1+-');
+				xlabel (wavenumber_axis);
+				ylabel (parameter_axis);
+				flipx();
+				%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+		  	elseif ( eing_num > 4 )                                       # dann alle in 1
+				fig(FIT_PARAMETER);
+				clf();
+				hold on;
+				for j=1:(eing_num-3)
+				parameternr = str2num(substring(eingaben,4));
+				clear fpp;							# noch pr�fen, ob der bereich stimmt
+				for i=1:length(wz_to_fit)					# RESTRICTIONS kontrollieren!!
+						fpp(j) = fit(j).parameters(parameternr);
+				endfor;
+					plot(wz_to_fit, fpp, '1+-');
+				endfor;
+				xlabel (wavenumber_axis);
+				ylabel (parameter_axis);
+				flipx();
+				%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+		  	else
+				printf("  Sytax: plot fit parameter <<nr>>\n");
+				printf("  Parameter: 1 - %d\n", length(fit(1).parameters));
+		  	endif;
 		elseif ( strcmp(substring(eingaben,3),"stddev") )
 		    if ( eing_num==3 )
 			# F�r jede WL: Betraege der STDresid aufsummieren
 			for i=1:length(wz_to_fit)
-			  residual(i)= sum( abs( fit(i).stdresid ) );
+			  	residual(i)= sum( abs( fit(i).stdresid ) );
 			endfor;
 			figure (FIT_STDDEV);
 			plot (wz_to_fit, residual);
@@ -6250,38 +6253,37 @@ case {"cut" }
 			flipx();
 			clear residual;
 		    else
-			printf ("  Syntax: plot fit stddev\n");
+				printf ("  Syntax: plot fit stddev\n");
 		    endif;
 		elseif ( strcmp(substring(eingaben,3),"values") )
 		    data_to_plot = eing_num - 3;
 		    if ( data_to_plot > 0 )
 		        if ( data_to_plot <= 3)
 		    	    pspalten = data_to_plot;
-			    pzeilen = 1;
+			    	pzeilen = 1;
 		    	else
-			    pspalten = 3;
-			    pzeilen = roundup(data_to_plot/pspalten);
+					pspalten = 3;
+					pzeilen = roundup(data_to_plot/pspalten);
 		        endif;
-			von = 1; bis = data_to_plot;
-			figure (FIG_FIT_KINETICS);
-			hold off;
-			for i=von:bis
-			    subplot(pzeilen, pspalten, ((i-von)+1) );
-			    [ index_to_plot(i), wz_to_plot(i) ] = ir_get_index( str2num(substring(eingaben,i+3)),  freqvec);
-			    plot_label=sprintf("-;%d;1", wz_to_plot(i));
-			    plot(timevec, mdata(index_to_plot(i),:),plot_label);
-			    hold on;
-			    plot_label=sprintf("-;k=%f;3", fit(index_to_plot(i)).parameters(3));
-			    plot(timevec, fit(index_to_plot(i)).values,plot_label);
-			    xlabel (time_axis);
- 			    ylabel (intensity_axis);
-			    printf("%s",fit(index_to_plot(i)).report);
-			    hold off;
-			endfor;
+				von = 1; bis = data_to_plot;
+				figure (FIG_FIT_KINETICS);
+				hold off;
+				for i=von:bis
+					subplot(pzeilen, pspalten, ((i-von)+1) );
+					[ index_to_plot(i), wz_to_plot(i) ] = ir_get_index( str2num(substring(eingaben,i+3)),  freqvec);
+					plot_label=sprintf("-;%d;1", wz_to_plot(i));
+					plot(timevec, mdata(index_to_plot(i),:),plot_label);
+					hold on;
+					plot_label=sprintf("-;k=%f;3", fit(index_to_plot(i)).parameters(3));
+					plot(timevec, fit(index_to_plot(i)).values,plot_label);
+					xlabel (time_axis);
+					ylabel (intensity_axis);
+					printf("%s",fit(index_to_plot(i)).report);
+					hold off;
+				endfor;
 		    else
-		      printf("  Syntax: plot fit values wz1 wz2 wz3 ...\n");
+		      	printf("  Syntax: plot fit values wz1 wz2 wz3 ...\n");
 		    endif;
-
 		else
 		    printf("  Falsche Parameter\n");
 		    apropos("plot");
@@ -6532,8 +6534,9 @@ case {"cut" }
 		plot_active=0;
     endif;
 
+	%%%%% This holds the pipe to the plot window open so it can be manipulated. Close window to resume code execution from here
 	if (plot_active)
-		printf("	close current plot window before proceeding...");
+		printf("	close current plot window before proceeding...\n");
 		pause(1)
 		while (waitforbuttonpress()==0) pause(0.5) endwhile;
 	endif;
