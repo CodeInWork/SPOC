@@ -6534,15 +6534,6 @@ case {"cut" }
 		plot_active=0;
     endif;
 
-	%%%%% This holds the pipe to the plot window open so it can be manipulated. Close window to resume code execution from here
-	if (plot_active)
-		printf("	close current plot window before proceeding...\n");
-		pause(1)
-		while (waitforbuttonpress()==0) pause(0.5) endwhile;
-	endif;
-
-
-
 
 #
 #	Ende Plot
