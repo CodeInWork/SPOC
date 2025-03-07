@@ -27,7 +27,7 @@
 %  "#"
 %
 % if used in Visual Studio Code under Win:
-% add to Windows environmental variables: 
+% add to Windows environmental variables:
 %    	"QT_PLUGIN_PATH"="C:/Octave/Octave-5.1.0.0/mingw64/qt5/plugins"
 %    	"PATH"="C:/Octave/Octave-5.1.0.0/mingw64/bin"
 %
@@ -154,9 +154,10 @@ global	  command_ctr=1;			% Anzahl der Abgearbeiteten + Abzuarbeitenden Befehle
 global	  mak_nr=0;				% Anzahl definierter Makros
 
 % hier den Pfad des Programmes eintragen. Wird bei install in die .octaverc geschrieben.
-global SPOC_PATH = "D:/Dokumente/SPOC/SPOC";
+%global SPOC_PATH = "D:/OctaveSkripte/SPOC";
+global SPOC_PATH = file_path = fileparts(mfilename('fullpath'));
 global SPOC_HISTORY_PATH = "C:/Temp"
-global DEFAULT_DATA_PATH = "D:/Data"
+global DEFAULT_DATA_PATH = "C:/Data"
 
 % Sicherer Modus (dafuer aber langsamer...)
 global SECURITY_MODE = 0;
@@ -189,7 +190,7 @@ global DEFAULT_COLOR = "b";			% Blue
 global AUTO_FIGURE = 1;				  % Programmgesteuerte Ausgabe   TODO
 
 % activate chosen graphics toolkit
-graphics_toolkit(DEFAULT_PLOTTER);               		
+graphics_toolkit(DEFAULT_PLOTTER);
 
 
 if ( !ispc() )
@@ -465,7 +466,7 @@ global BL_SPLINE_RHGCD2O = [1000,	1020,	1010,
 				1746,	1798,	1773,
 				1746,	1798,	1798];
 
-global BL_SPLINE_BackSubD2O = [1000,	1020,	1010,
+global BL_SPLINE_BackSubD2O_old = [1000,	1020,	1010,
 				1020,	1040,	1030,
 				1040,	1060,	1050,
 				1060,	1080,	1070,
@@ -481,6 +482,25 @@ global BL_SPLINE_BackSubD2O = [1000,	1020,	1010,
 				1593,	1644,	1618,
 				1644,	1695,	1670,
 				1695,	1746,	1720,
+				1746,	1797,	1773,
+				1746,	1797,	1797];
+
+global BL_SPLINE_BackSubD2O = [1000,	1020,	1010,
+				1020,	1040,	1030,
+				1040,	1060,	1050,
+				1060,	1080,	1070,
+				1080,	1100,	1090,
+				1100, 1171, 1150,
+        1171, 1251, 1210,
+        1251, 1310, 1260,
+        1310, 1370, 1331,
+        1370, 1430, 1412,
+        1430, 1486, 1458,
+        1486, 1549, 1501,
+        1549, 1592, 1560,
+        1592, 1630, 1618,
+        1630, 1693, 1640,
+				1693,	1746,	1720,
 				1746,	1797,	1773,
 				1746,	1797,	1797];
 
@@ -507,7 +527,7 @@ global BL_SPLINE_DESCD2O = [1484, 1504, 1494,
         1656, 1682, 1682];
 
 
-global BL_SPLINE = BL_SPLINE_DESCD2O;
+global BL_SPLINE = BL_SPLINE_BackSubD2O;
 
 % *******************************  Definitionen, vordefiniertes Macro
 %global macro;
@@ -632,8 +652,8 @@ global    fitmatrix;
 global    select;				% bezeichnet die Nr des aktuell ausgew. Spektrums.
 
 %*********3D Plotting options
-global    XRES_3D = 30;				% Auflösung für 3D - plots plot o
-global    YRES_3D = 200;
+global    XRES_3D = 100;				% Auflösung für 3D - plots plot o
+global    YRES_3D = 100;
 global    AZ_3D = 45;
 global    EL_3D = 45;
 global    shading_3D = "faceted";
@@ -1310,12 +1330,12 @@ function [sse, FittedMatrix] = gfit_expfun_area_wt(params,x,y,order, weights)			
     x=x(PRE_INDEX:end);
 
     for i=1:order
-	FittedMatrix(:,i) = zeros(rows(x),1) + OMatrix(i);
-	%printf("FittedMatrix: ");
-	%size(FittedMatrix)
-	for j=1:order
-	    FittedMatrix(:,i) += AMatrix(i,j) * (1-exp(-KMatrix(j)*x));
-	end
+      FittedMatrix(:,i) = zeros(rows(x),1) + OMatrix(i);
+      %printf("FittedMatrix: ");
+      %size(FittedMatrix)
+      for j=1:order
+          FittedMatrix(:,i) += AMatrix(i,j) * (1-exp(-KMatrix(j)*x));
+      end
     end
 
     %printf("y: ");
@@ -1395,7 +1415,7 @@ end
 function [sse, data] = linear_combination(params, x, y)
     data = zeros(rows(y),1);
     for i=1:columns(y)
-	data = data + params(i) * y(:,i);
+	    data = data + params(i) * y(:,i);
     end
     ac = svd_autocorr(data);
     % Optimierung für fminsearch, aber eigentlich max. gesucht, also:
@@ -1410,12 +1430,12 @@ end
 function [R,l]=rotate_matrix(V, rotation_order)
     if (nargin<2) ; rotation_order = 1; end;
     for i=1:min(size(V))
-	for j=1:min(size(V))
-	    X(i,j) = 0;
-    	    for k=1:(max(size(V))-rotation_order)
-        	X(i,j) = X(i,j) + V(k,i)*V(k+rotation_order,j);
-    	    end
-	end
+      for j=1:min(size(V))
+          X(i,j) = 0;
+              for k=1:(max(size(V))-rotation_order)
+                X(i,j) = X(i,j) + V(k,i)*V(k+rotation_order,j);
+              end
+      end
     end
     Xs=(X+X')./2;
 
@@ -2043,57 +2063,57 @@ do
 
   case {"bench"}				% ein einfacher Benchmark über svd, rotation, gf
     if (eing_num == 1)
-	if (in_bench==0)
-	    if ( 0==message("Einen Benchmarktest starten? Geladene Daten werden geloescht!","question") )
-		loaded_files = 0;				% Multi-Modus ggf. rücksetzen
-		% add_to_history("load 3ddata benchtest.x3d");
-		[freqvec, timevec, mdata, filetype_name] = read_data("benchtest.x3d");
-		gf_ITERATIONS=3;
-		gf_k_start = [ 0, 0, 0 ];
-		gf_k_stop = [ 100, 100, 100];
-		add_to_history("svd");
-		add_to_history("rotation 1 - 3");
-		add_to_history("globalfit 3");
-		add_to_history("bench");
-		in_bench = 1;
-		tic();
+      if (in_bench==0)
+          if ( 0==message("Einen Benchmarktest starten? Geladene Daten werden geloescht!","question") )
+        loaded_files = 0;				% Multi-Modus ggf. rücksetzen
+        % add_to_history("load 3ddata benchtest.x3d");
+        [freqvec, timevec, mdata, filetype_name] = read_data("benchtest.x3d");
+        gf_ITERATIONS=3;
+        gf_k_start = [ 0, 0, 0 ];
+        gf_k_stop = [ 100, 100, 100];
+        add_to_history("svd");
+        add_to_history("rotation 1 - 3");
+        add_to_history("globalfit 3");
+        add_to_history("bench");
+        in_bench = 1;
+        tic();
 	    else
-		printf("  Abgebrochen.\n");
+		    printf("  Abgebrochen.\n");
 	    end;
-	else
-		in_bench = 0;
-		bench_time = toc();
-		printf("  Benchmark beendet. Berechnung dauerte %f Sekunden.\n", bench_time);
-		bench_system=inputdlg("Please enter a name:","System Information");
-		try
-			load "spoc.benches"
-		catch
-			printf ("  Noch keine getesteten Systeme vorhanden\n");
-		end_try_catch;
-		if ( exist ("bench_info") )
-			bench_position = length(bench_info)+1;
-		else
-			bench_position = 1;
-		end;
-		bench_info{bench_position}.name = bench_system;
-		bench_info{bench_position}.time = bench_time;
-		save "spoc.benches" bench_info
-	end;
-    else						% Plotten
-	load "spoc.benches";
-	fig (FIG_BENCH);
-	clf();
-	for i=1:length(bench_info)
-		bench_bt(1,i)=bench_info{i}.time;
-		bench_bt(2,i)=0;
-		bench_lg{i}=sprintf("%s (%d s)",bench_info{i}.name, bench_info{i}.time);
-	end;
-	bar(bench_bt);
-	legend(bench_lg);
-	xlabel("System");
-	ylabel("Zeit (s)");
-	title("Time for gf");
+    else
+      in_bench = 0;
+      bench_time = toc();
+      printf("  Benchmark beendet. Berechnung dauerte %f Sekunden.\n", bench_time);
+      bench_system=inputdlg("Please enter a name:","System Information");
+      try
+        load "spoc.benches"
+      catch
+        printf ("  Noch keine getesteten Systeme vorhanden\n");
+      end_try_catch;
+      if ( exist ("bench_info") )
+        bench_position = length(bench_info)+1;
+      else
+        bench_position = 1;
+      end;
+      bench_info{bench_position}.name = bench_system;
+      bench_info{bench_position}.time = bench_time;
+      save "spoc.benches" bench_info
     end;
+  else						% Plotten
+    load "spoc.benches";
+    fig (FIG_BENCH);
+    clf();
+    for i=1:length(bench_info)
+      bench_bt(1,i)=bench_info{i}.time;
+      bench_bt(2,i)=0;
+      bench_lg{i}=sprintf("%s (%d s)",bench_info{i}.name, bench_info{i}.time);
+    end;
+    bar(bench_bt);
+    legend(bench_lg);
+    xlabel("System");
+    ylabel("Zeit (s)");
+    title("Time for gf");
+  end;
 
   case {"live"}
 		LIVE_MODE = LIVE_MODE + 1;
@@ -2132,7 +2152,7 @@ do
 
 % included by Paul Fischer
 % calculates Difference spectra by taking averaged dark period (t<0) as reference I0
-% using Lambert-Beer-Law Diff=log10(I0/I)
+% using Lambert-Beer-Law Diff=log10(I0/I)->bl absorbance
   case {"diffspec"}
     if ( eing_num == 1 )
       put();
@@ -2159,244 +2179,227 @@ do
 %	end;
 
   case {"reset_time"}			% Zeitachse immer aufsteigend
-	time_axis_index_position=timevec(1);		% bei reset_timebase werden alle vorherigen Werte negativ
-	one_timestep = 0;						% sollte in read_data integriert werden
-	for i=2:length(timevec)					% i.e. über process_data
-		if ( timevec(i) <= time_axis_index_position )
-			one_timestep++;
-			if (one_timestep>1); printf("  Warnung: reset timebase mehrfach vorhanden\n"); end;
-			for j=1:(i-1)				% vorhergehende Zeiten alle negativ
-				timevec(j)=timevec(j)-time_axis_index_position;
-			end;
-			printf("  Info: Die Zeitachse wurde verschoben: Wert: -%f\n", time_axis_index_position);
-		end;
-		time_axis_index_position = timevec(i);
-	end;
+    time_axis_index_position=timevec(1);		% bei reset_timebase werden alle vorherigen Werte negativ
+    one_timestep = 0;						% sollte in read_data integriert werden
+    for i=2:length(timevec)					% i.e. über process_data
+      if ( timevec(i) <= time_axis_index_position )
+        one_timestep++;
+        if (one_timestep>1); printf("  Warnung: reset timebase mehrfach vorhanden\n"); end;
+        for j=1:(i-1)				% vorhergehende Zeiten alle negativ
+          timevec(j)=timevec(j)-time_axis_index_position;
+        end;
+        printf("  Info: Die Zeitachse wurde verschoben: Wert: -%f\n", time_axis_index_position);
+      end;
+      time_axis_index_position = timevec(i);
+    end;
 
   case {"splitzero" }			% Den aktuellen Datensatz spalten
-	 [ fdummy, tdummy, mdummy, splits ] = process_data(freqvec, timevec, mdata);
-	 %  Jetzt aufspalten in splits unterbereiche; jeweils der Bereich links und rechts eines Zeitsprunges wird mitgenommen
-	 if ( length(splits) > 1 )
-		kkv = timevec(1:splits(2)-1);
-		ddm = mdata(:,1:splits(2)-1);
-		dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", 1, 1, splits(2)-1, splits(1), basename(listenname));
-		store_data(freqvec, kkv, ddm, dummy);
-		printf("  Bereich %d: %d - %d\n", 1, 1, splits(2)-1);
-		if ( length(splits)>2 )
-			for i=2:length(splits)-1
-				kkv = timevec(splits(i-1):splits(i+1)-1);
-				ddm = mdata(:,splits(i-1):splits(i+1)-1);
-				dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", i,splits(i-1),splits(i+1)-1, splits(i), basename(listenname));
-				store_data(freqvec, kkv, ddm, dummy);
-				printf("  Bereich %d: %d - %d\n", i, splits(i-1), splits(i+1)-1);
-			end;
-		else
-			i=2;
-		end;
-		kkv = timevec(splits(i):end);
-		ddm = mdata(:,splits(i):end);
-		dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", i+1, splits(i), length(timevec), splits(i),basename(listenname));
-		store_data(freqvec, kkv, ddm, dummy);
-		printf("  Bereich %d: %d - %d\n", i+1, splits(i), length(timevec));
-	end;
+     [ fdummy, tdummy, mdummy, splits ] = process_data(freqvec, timevec, mdata);
+     %  Jetzt aufspalten in splits unterbereiche; jeweils der Bereich links und rechts eines Zeitsprunges wird mitgenommen
+     if ( length(splits) > 1 )
+        kkv = timevec(1:splits(2)-1);
+        ddm = mdata(:,1:splits(2)-1);
+        dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", 1, 1, splits(2)-1, splits(1), basename(listenname));
+        store_data(freqvec, kkv, ddm, dummy);
+        printf("  Bereich %d: %d - %d\n", 1, 1, splits(2)-1);
+        if ( length(splits)>2 )
+            for i=2:length(splits)-1
+                kkv = timevec(splits(i-1):splits(i+1)-1);
+                ddm = mdata(:,splits(i-1):splits(i+1)-1);
+                dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", i,splits(i-1),splits(i+1)-1, splits(i), basename(listenname));
+                store_data(freqvec, kkv, ddm, dummy);
+                printf("  Bereich %d: %d - %d\n", i, splits(i-1), splits(i+1)-1);
+            end;
+        else
+          i=2;
+        end;
+        kkv = timevec(splits(i):end);
+        ddm = mdata(:,splits(i):end);
+        dummy = sprintf("Part %d (%d-%d, Jump: %d) of %s", i+1, splits(i), length(timevec), splits(i),basename(listenname));
+        store_data(freqvec, kkv, ddm, dummy);
+        printf("  Bereich %d: %d - %d\n", i+1, splits(i), length(timevec));
+    end;
 
 
   case {"align" "al"}
 	% Zeitspr�nge entfernen; die Zeitachse wird einfach sequentiell angeordnet
-	% pos = timevec(1);
-	%for i=3:length(timevec)-1
-	%	if ( timevec(i)<timevec(i-1) )
-	%		printf("  Korrektur: timevec(%d) = %f  ->", i, timevec(i));
-	%		offset = timevec(i-1) + ((timevec(i-1)-timevec(i-2))/2) + ((timevec(i+1)-timevec(i))/2);
-	%		timevec(i:end) = timevec(i:end)+offset;
-	%		printf(" %f\n", timevec(i));
-	%	end;
-	%end;
-	[freqvec,timevec,mdata,splits]=process_data(freqvec,timevec,mdata,1);
+	  [freqvec,timevec,mdata,splits]=process_data(freqvec,timevec,mdata,1);
 
 
   case {"ad" }
-	if ( eing_num == 1 )
-		clear dummy;
-		dummy=adjust_data();
-		printf("  Setting REACTION_START_INDEX=%d\n",dummy);
-		dummy2=sprintf("ad %d",dummy);								% ersetzen for Skript TODO or NOT
-		dhistory(history_reference).name=dummy2;
-	elseif ( strcmp(substring(eingaben,2),"auto") )
-		clear dummy;
-		dummy=adjust_data_auto();
-		printf("  Setting REACTION_START_INDEX=%d\n",dummy);
-	else
-		REACTION_START_INDEX = str2num(substring(eingaben,2));
-	end;
-	if (VERBOSITY_LEVEL)
-		printf("Vorschlag Naechster Schritt:\n");
-		printf("      Grundlinienkorrektur zur Entfernung von Drifts oder Temperaturschwankungen.\n");
-		printf("      fuer Einzelheiten: ? baseline\n");
-	end;
+    if ( eing_num == 1 )
+        clear dummy;
+        dummy=adjust_data();
+        printf("  Setting REACTION_START_INDEX=%d\n",dummy);
+        dummy2=sprintf("ad %d",dummy);								% ersetzen for Skript TODO or NOT
+        dhistory(history_reference).name=dummy2;
+    elseif ( strcmp(substring(eingaben,2),"auto") )
+        clear dummy;
+        dummy=adjust_data_auto();
+        printf("  Setting REACTION_START_INDEX=%d\n",dummy);
+    else
+      REACTION_START_INDEX = str2num(substring(eingaben,2));
+    end;
+    if (VERBOSITY_LEVEL)
+        printf("Vorschlag Naechster Schritt:\n");
+        printf("      Grundlinienkorrektur zur Entfernung von Drifts oder Temperaturschwankungen.\n");
+        printf("      fuer Einzelheiten: ? baseline\n");
+    end;
 
   case {"process" "pd"}			% Der aktuelle Datensatz wird angepasst:		Baustelle
-										% ggf. Aufspalten, ggf. Nullpunktverschiebung, etc.
-	splits = get_timesteps(timevec);
-%	[ freqvec, timevec, mdata, splits ] = process_data(freqvec, timevec, mdata);
-	if ( length(splits) ==  1)
-		printf("  Die Zeitachse ist gueltig. <<ad>> zur Nullpunkteinstellung verwenden\n");
-	elseif ( length(splits) == 2 )												% 1  - kein Zeitsprung, 2 - 1 Zeitsprung, no split necessary
-		printf("  Die Daten enthalten 1 Zeitsprung. Die Zeitachse wird korrigiert.\n");
-		printf("  <<ad>> zur Nullpunkteinstellung verwenden\n");
-		[ freqvec, timevec, mdata, dsplits ] = process_data(freqvec, timevec, mdata);
-	else
-		printf("  Mehrere Zeitspruenge vorhanden. Datei wird aufgeteilt.\n");
-		for i=2:length(splits)-1
-			ptimevec = timevec(splits(i-1):splits(i+1)-1);
-			pmdata = mdata(:,splits(i-1):splits(i+1)-1);
-			[freqvec, ptimevec, pmdata] = process_data(freqvec, ptimevec, pmdata);
-			% dummy = sprintf("Section_%d_(%d_to_%d_ Change_%d)_of_File_%s", i-1,splits(i-1),splits(i+1)-1, splits(i), basename(listenname));
-			dummy = sprintf("%s_Section_%d_Pts_%d_to_%d_Jp_%d.x3d", basename(listenname),i-1,splits(i-1),splits(i+1)-1,splits(i));
-			printf("%s\n",dummy);
-			store_data(freqvec, ptimevec, pmdata, dummy);
-		end;
-		i=i+1;
-		ptimevec = timevec(splits(i-1):end);
-		pmdata = mdata(:,splits(i-1):end);
-		[freqvec, ptimevec, pmdata] = process_data(freqvec, ptimevec, pmdata);
-		dummy = sprintf("Section_%d_(%d_to_%d_Change_%d)_of_File_%s", i-1,splits(i-1),length(timevec), splits(i), basename(listenname));
-		printf("%s\n",dummy);
-		store_data(freqvec, ptimevec, pmdata, dummy);
-		if (VERBOSITY_LEVEL)
-			printf("Vorschlag Naechster Schritt:\n");
-			printf("      # <<nr>>                       ggf. auf den zu bearbeitenden Datensatz schalten\n");
-			printf("      ad | adjust_data    Reaktionsbeginn festlegen\n");
-		end;
-	end;
+      % ggf. Aufspalten, ggf. Nullpunktverschiebung, etc.
+      splits = get_timesteps(timevec);
+      if ( length(splits) ==  1)
+          printf("  Die Zeitachse ist gueltig. <<ad>> zur Nullpunkteinstellung verwenden\n");
+      elseif ( length(splits) == 2 )												% 1  - kein Zeitsprung, 2 - 1 Zeitsprung, no split necessary
+          printf("  Die Daten enthalten 1 Zeitsprung. Die Zeitachse wird korrigiert.\n");
+          printf("  <<ad>> zur Nullpunkteinstellung verwenden\n");
+          [ freqvec, timevec, mdata, dsplits ] = process_data(freqvec, timevec, mdata);
+      else
+          printf("  Mehrere Zeitspruenge vorhanden. Datei wird aufgeteilt.\n");
+          for i=2:length(splits)-1
+              ptimevec = timevec(splits(i-1):splits(i+1)-1);
+              pmdata = mdata(:,splits(i-1):splits(i+1)-1);
+              [freqvec, ptimevec, pmdata] = process_data(freqvec, ptimevec, pmdata);
+              % dummy = sprintf("Section_%d_(%d_to_%d_ Change_%d)_of_File_%s", i-1,splits(i-1),splits(i+1)-1, splits(i), basename(listenname));
+              dummy = sprintf("%s_Section_%d_Pts_%d_to_%d_Jp_%d.x3d", basename(listenname),i-1,splits(i-1),splits(i+1)-1,splits(i));
+              printf("%s\n",dummy);
+              store_data(freqvec, ptimevec, pmdata, dummy);
+          end;
+          i=i+1;
+          ptimevec = timevec(splits(i-1):end);
+          pmdata = mdata(:,splits(i-1):end);
+          [freqvec, ptimevec, pmdata] = process_data(freqvec, ptimevec, pmdata);
+          dummy = sprintf("Section_%d_(%d_to_%d_Change_%d)_of_File_%s", i-1,splits(i-1),length(timevec), splits(i), basename(listenname));
+          printf("%s\n",dummy);
+          store_data(freqvec, ptimevec, pmdata, dummy);
+          if (VERBOSITY_LEVEL)
+              printf("Vorschlag Naechster Schritt:\n");
+              printf("      # <<nr>>                       ggf. auf den zu bearbeitenden Datensatz schalten\n");
+              printf("      ad | adjust_data    Reaktionsbeginn festlegen\n");
+          end;
+      end;
 
-  case {"get_average" }			% Lädt eine Liste von 3D-Spektren, bildet den Mittelwert und
-	specnum = 0;								% Baustelle
-	if ( eing_num > 1 )				% schreibt ihn in die globalen Variablen. Auf Wunsch mit automatischer Startdetektion
-	    % Liste aus der Zeile holen
-	    for i=2:eing_num
-		av_filename{i}=substring(eingaben,i);
-		specnum++;
-	    end;
-	else
-	    % Zenity....
-	    %speclist = file_selection("Spektren eingeben","multiple", sprintf("%s/",pwd()));
-	    [speclist,specpath] = uigetfile("*","Select Files for average",".","MultiSelect","On")
+  case {"get_average" }			% Lädt eine Liste von 3D-Spektren, bildet den Mittelwert und schreibt ihn in die globalen Variablen. Auf Wunsch mit automatischer Startdetektion
+    specnum = 0;								% Baustelle
+    if ( eing_num > 1 )				%
+      % Liste aus der Zeile holen
+      for i=2:eing_num
+        av_filename{i}=substring(eingaben,i);
+        specnum++;
+      end;
+    else
+      % Zenity....
+      %speclist = file_selection("Spektren eingeben","multiple", sprintf("%s/",pwd()));
+      [speclist,specpath] = uigetfile("*","Select Files for average",".","MultiSelect","On")
       if ( max(size(isascii(speclist(1)))) > 1)
-		    specnum = max(size(speclist));
-		    for i=1:specnum
-		      av_filename{i} = sprintf("%s", speclist{i});
-		    end;
-	    else
-		    specnum = 1;
-		    av_filename{1} = sprintf("%s", speclist);
-	    end;
-	end;
-	printf("  %d Files werden bearbeitet.\n", specnum);
-	min_pretime = 1e20;
-	%	Files übereinanderlegen, so dass Reaktion immer zu gleichem Zeitpunkt startet
-	%	Interpoliert wird auf das 1. Spektrum
-	for i=1:specnum
-	    [m_freqvec{i}, m_timevec{i}, m_mdata{i}, m_filetype_name{i}] = read_data(av_filename{i});
-	    m_PRETIME{i} = get_pretime(m_freqvec{i}, m_timevec{i}, m_mdata{i});
-	    m_INDEX{i} = time_get_index(m_PRETIME{i}, timevec);
-	    if (m_PRETIME{i} < min_pretime)
-		    min_pretime = m_pretime{i};
-	    end;
-	    printf("  Spektrum %d von %d (%s) gelesen, Reaktionsstart: %f\n", i, specnum, av_filename{i}, m_PRETIME{i});
-	end;
-	printf("  fertig.\n");
+        specnum = max(size(speclist));
+        for i=1:specnum
+          av_filename{i} = sprintf("%s", speclist{i});
+        end;
+      else
+        specnum = 1;
+        av_filename{1} = sprintf("%s", speclist);
+      end;
+    end;
+    printf("  %d Files werden bearbeitet.\n", specnum);
+    min_pretime = 1e20;
+    %	Files übereinanderlegen, so dass Reaktion immer zu gleichem Zeitpunkt startet
+    %	Interpoliert wird auf das 1. Spektrum
+    for i=1:specnum
+        [m_freqvec{i}, m_timevec{i}, m_mdata{i}, m_filetype_name{i}] = read_data(av_filename{i});
+        m_PRETIME{i} = get_pretime(m_freqvec{i}, m_timevec{i}, m_mdata{i});
+        m_INDEX{i} = time_get_index(m_PRETIME{i}, timevec);
+        if (m_PRETIME{i} < min_pretime)
+          min_pretime = m_pretime{i};
+        end;
+        printf("  Spektrum %d von %d (%s) gelesen, Reaktionsstart: %f\n", i, specnum, av_filename{i}, m_PRETIME{i});
+    end;
+    printf("  fertig.\n");
 
 
   case {"calc" }
-	printf("  Noch nicht implementiert.\n");
+	  printf("  Noch nicht implementiert.\n");
 
 
   case {"unset" }
     if ( strcmp(substring(eingaben,2),"pretime") )
-	PRE_TIME = 0;
-	PRE_INDEX = 0;
+      PRE_TIME = 0;
+      PRE_INDEX = 0;
     else
-	printf("  Unbekannte Funktion.\n");
-	apropos("unset");
+      printf("  Unbekannte Funktion.\n");
+      apropos("unset");
     end;
 
 
   case {"set" }
     if ( eing_num > 1)
-	if ( strcmp(substring(eingaben,2),"u") )
-    	    works_on = "u";
-	elseif ( strcmp(substring(eingaben,2),"s") )
-    	    works_on = "s";
-	elseif ( strcmp(substring(eingaben,2),"v") )
-    	    works_on = "v";
-	elseif ( strcmp(substring(eingaben,2),"o") )
-    	    works_on = "o";
-	elseif ( strcmp(substring(eingaben,2),"hold") )
-    	    hold;
-    	    gnuplot_hold=1;
-	elseif ( strcmp(substring(eingaben,2),"print") )
-    	    OUTPUT_FORMAT = substring(eingaben, 3);
-	elseif ( strcmp(substring(eingaben,2),"spline"))
-		printf("\n  Definierte Splinefunktionen:\n");
-		whos BL_* ;
-		BL_SPLINE = input("  Bitte ausw�hlen: ");
-	elseif ( strcmp(substring(eingaben,2),"pretime") )
-	    if ( eing_num == 4 )
-		PRE_TIME_START = str2num( substring(eingaben,3) );
-		PRE_TIME = str2num( substring(eingaben,4) );
-	    elseif ( eing_num == 3 )
-		PRE_TIME_START = timevec(1);
-		PRE_TIME = str2num( substring(eingaben,3) );
-	    elseif ( eing_num == 2 )
-		printf("  Warnung: Wert wird automatisch gesetzt. Bitte überprüfen (plot pretime)!\n");
-		PRE_TIME = get_pretime(freqvec, timevec, mdata);
-		%	clear diffmatrix; clear maxval; clear maxpos;
-		%	diffmatrix = zeros(1,(length(timevec)-1));
-		%	for i=1:length(freqvec)
-		%    	diffmatrix = diffmatrix + abs(diff(mdata(i,:)));
-		%	end;
-		%	[ maxval, maxpos ] = max(diffmatrix);
-		%	printf("  %f (%d)\n", timevec(maxpos), maxpos);
-		%	PRE_TIME = timevec(maxpos);
-	    else
-		printf("  Benutzung: set pretime [<start> [<ende>]]\n");
-	    end;
-	    printf("  Reaktionsstart bei: %f(%d)\n", PRE_TIME, time_get_index(PRE_TIME, timevec));
-	else
-    	    printf("  Syntax: set u | s | v | o | hold | print <Dateityp>\n");
-	endif;
+      if ( strcmp(substring(eingaben,2),"u") )
+              works_on = "u";
+      elseif ( strcmp(substring(eingaben,2),"s") )
+              works_on = "s";
+      elseif ( strcmp(substring(eingaben,2),"v") )
+              works_on = "v";
+      elseif ( strcmp(substring(eingaben,2),"o") )
+              works_on = "o";
+      elseif ( strcmp(substring(eingaben,2),"hold") )
+              hold;
+              gnuplot_hold=1;
+      elseif ( strcmp(substring(eingaben,2),"print") )
+              OUTPUT_FORMAT = substring(eingaben, 3);
+      elseif ( strcmp(substring(eingaben,2),"spline"))
+          printf("\n  Definierte Splinefunktionen:\n");
+          whos BL_* ;
+          BL_SPLINE = input("  Bitte ausw�hlen: ");
+      elseif ( strcmp(substring(eingaben,2),"pretime") )
+          if ( eing_num == 4 )
+            PRE_TIME_START = str2num( substring(eingaben,3) );
+            PRE_TIME = str2num( substring(eingaben,4) );
+          elseif ( eing_num == 3 )
+            PRE_TIME_START = timevec(1);
+            PRE_TIME = str2num( substring(eingaben,3) );
+          elseif ( eing_num == 2 )
+            printf("  Warnung: Wert wird automatisch gesetzt. Bitte überprüfen (plot pretime)!\n");
+            PRE_TIME = get_pretime(freqvec, timevec, mdata);
+
+          else
+            printf("  Benutzung: set pretime [<start> [<ende>]]\n");
+          end;
+              printf("  Reaktionsstart bei: %f(%d)\n", PRE_TIME, time_get_index(PRE_TIME, timevec));
+      else
+              printf("  Syntax: set u | s | v | o | hold | print <Dateityp>\n");
+      endif;
     else
-	printf("  Syntax: set u | s | v | o | hold | print <Dateityp>\n");
+	    printf("  Syntax: set u | s | v | o | hold | print <Dateityp>\n");
     endif;
 
   case {"logscale" }		% Baustelle: process und adjust m�ssen vorher erfolgt ein
-        put();
-	if ( eing_num == 2 )
-	    resolution = str2num(substring(eingaben,2));
-	else
-	    resolution = 50;
-	    printf("  Keine Vektorgroesse angegeben. Setze 50.\n");
-	endif;
-	% Todo: Logspace ab Pretime....
-	% Umschreiben
-	if ( timevec(REACTION_START_INDEX+1)>=0 )				% 1. Wert ist immer Original
-		x_log_scale=logspace(log10(timevec(REACTION_START_INDEX+1)),log10(timevec(length(timevec))), resolution);
-		x_neu(1:REACTION_START_INDEX) = timevec(1:REACTION_START_INDEX);
-		mdata_neu(:,1:REACTION_START_INDEX) = mdata(:,1:REACTION_START_INDEX);
-		for i=1:length(x_log_scale)-1
-			x_neu(REACTION_START_INDEX+i) = mean(x_log_scale(i:i+1));
-			t_i_start = time_get_index(x_log_scale(i),timevec);
-			t_i_stop  = time_get_index(x_log_scale(i+1), timevec);
-			%printf("Wert: %f Index von: %d bis %d\n", x_neu(x_neu_start_index+i), t_i_start, t_i_stop);
-			mdata_neu(:,REACTION_START_INDEX+i) = mean(mdata(:,t_i_start:t_i_stop),2);
-		end;
-		mdata = mdata_neu;
-		timevec = x_neu;
-	else
-		printf("  logscale: Fehler! Reaktion beginnt bei negativen Werten!\n");
-		printf("  Bitte manuell korrigieren!\n");
-	end;
+          put();
+    if ( eing_num == 2 )
+        resolution = str2num(substring(eingaben,2));
+    else
+        resolution = 50;
+        printf("  Keine Vektorgroesse angegeben. Setze 50.\n");
+    endif;
+    % Todo: Logspace ab Pretime....
+    % Umschreiben
+    if ( timevec(REACTION_START_INDEX+1)>=0 )				% 1. Wert ist immer Original
+      x_log_scale=logspace(log10(timevec(REACTION_START_INDEX+1)),log10(timevec(length(timevec))), resolution);
+      x_neu(1:REACTION_START_INDEX) = timevec(1:REACTION_START_INDEX);
+      mdata_neu(:,1:REACTION_START_INDEX) = mdata(:,1:REACTION_START_INDEX);
+      for i=1:length(x_log_scale)-1
+        x_neu(REACTION_START_INDEX+i) = mean(x_log_scale(i:i+1));
+        t_i_start = time_get_index(x_log_scale(i),timevec);
+        t_i_stop  = time_get_index(x_log_scale(i+1), timevec);
+        %printf("Wert: %f Index von: %d bis %d\n", x_neu(x_neu_start_index+i), t_i_start, t_i_stop);
+        mdata_neu(:,REACTION_START_INDEX+i) = mean(mdata(:,t_i_start:t_i_stop),2);
+      end;
+      mdata = mdata_neu;
+      timevec = x_neu;
+    else
+      printf("  logscale: Fehler! Reaktion beginnt bei negativen Werten!\n");
+      printf("  Bitte manuell korrigieren!\n");
+    end;
 
   case { "smooth" }
     printf("  Please use tsmooth or fsmooth\n");
@@ -2426,41 +2429,41 @@ do
 	  end
 
   case {"resample" }		% TODO: - 	Mit Nutzung von Interp1, als extra Funktion....
-	put();
-	if ( eing_num == 3 )
-	    resample_counter = str2num(substring(eingaben,3));
-	    if ( strcmp(substring(eingaben, 2),"t") )
-		starttime=timevec(1);
-		stoptime=timevec(length(timevec));
-		inctime=(stoptime-starttime)/resample_counter;
-		timevec_new = [starttime:inctime:stoptime];
-		mdata_new = zeros(length(freqvec),length(timevec_new));
-		for i=1:length(freqvec)
-		    mdata_new(i,:) = interp1(timevec,mdata(i,:), timevec_new);
-		end;
-		timevec=timevec_new;
-		mdata=mdata_new;
-		clear mdata_new;
-		clear timevec_new;
-	    elseif ( strcmp(substring(eingaben, 2),"w") )
-		startwl=freqvec(1);
-		stopwl=freqvec(length(freqvec));
-		incwl=(stopwl-startwl)/resample_counter;
-		freqvec_new = [startwl:incwl:stopwl];
-		mdata_new = zeros(length(freqvec_new), length(timevec));
-		for i=1:length(timevec)
-		    mdata_new(:,i) = interp1(freqvec,mdata(:,i),freqvec_new);
-		end;
-		freqvec=freqvec_new';
-		mdata=mdata_new;
-		clear freqvec_new;
-		clear mdata_new;
-	    else
-		printf("  resample t|w <nr>\n");
-	    endif;
-	else
-	    printf("  resample t|w <nr>\n");
-	endif;
+    put();
+    if ( eing_num == 3 )
+        resample_counter = str2num(substring(eingaben,3));
+        if ( strcmp(substring(eingaben, 2),"t") )
+      starttime=timevec(1);
+      stoptime=timevec(length(timevec));
+      inctime=(stoptime-starttime)/resample_counter;
+      timevec_new = [starttime:inctime:stoptime];
+      mdata_new = zeros(length(freqvec),length(timevec_new));
+      for i=1:length(freqvec)
+          mdata_new(i,:) = interp1(timevec,mdata(i,:), timevec_new);
+      end;
+      timevec=timevec_new;
+      mdata=mdata_new;
+      clear mdata_new;
+      clear timevec_new;
+        elseif ( strcmp(substring(eingaben, 2),"w") )
+      startwl=freqvec(1);
+      stopwl=freqvec(length(freqvec));
+      incwl=(stopwl-startwl)/resample_counter;
+      freqvec_new = [startwl:incwl:stopwl];
+      mdata_new = zeros(length(freqvec_new), length(timevec));
+      for i=1:length(timevec)
+          mdata_new(:,i) = interp1(freqvec,mdata(:,i),freqvec_new);
+      end;
+      freqvec=freqvec_new';
+      mdata=mdata_new;
+      clear freqvec_new;
+      clear mdata_new;
+        else
+      printf("  resample t|w <nr>\n");
+        endif;
+    else
+        printf("  resample t|w <nr>\n");
+    endif;
 
   case {"freqidx" }
     [a,b] = ir_get_index(str2num(substring(eingaben,2)), freqvec);
@@ -2602,197 +2605,198 @@ do
 	      freqvec = wavenumbers;
 	      timevec = time;
 
-case {"timekill" "tk" }
-	if (eing_num > 2)
-		put();
-		tfromi=time_get_index(str2num(substring(eingaben,2)), timevec);
-		ttoi=time_get_index(str2num(substring(eingaben,3)),timevec);
-		offset = timevec(ttoi+1) - timevec(tfromi);
-		timevec(tfromi:ttoi)=[];
-		timevec(tfromi:end)=timevec(tfromi:end)-offset;
-		mdata(:,tfromi:ttoi)=[];
-	else
-		apropos("timekill");
-	end;
-
-case {"remove" }
-	if (eing_num > 2)
-		put();
-		tfromi=time_get_index(str2num(substring(eingaben,2)), timevec);
-		ttoi=time_get_index(str2num(substring(eingaben,3)),timevec);
-		%offset = timevec(ttoi+1) - timevec(tfromi);
-		timevec(tfromi:ttoi)=[];
-		%timevec(tfromi:end)=timevec(tfromi:end)-offset;
-		mdata(:,tfromi:ttoi)=[];
-	else
-		apropos("remove");
-	end;
-
-case { "freq_index" }
-  if (eing_num > 1)
-    printf("  Element No. %d\n", get_index(str2num(substring(eingaben,2)),freqvec));
-  endif;
-
-case {"freq_remove" }
-	if (eing_num > 2)
-		put();
-		ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
-		ftoi=get_index(str2num(substring(eingaben,3)), freqvec);
-		%offset = timevec(ttoi+1) - timevec(tfromi);
-		freqvec(min(ffromi,ftoi):max(ffromi,ftoi))=[];
-		%timevec(tfromi:end)=timevec(tfromi:end)-offset;
-		mdata(min(ffromi,ftoi):max(ffromi,ftoi),:)=[];
-		printf("  Removed datapoints %d - %d\n", ffromi, ftoi);
-	elseif (eing_num > 1)
-    put();
-		ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
-    freqvec(ffromi)=[];
-    mdata(ffromi,:)=[];
-		printf("  Removed datapoint %d\n", ffromi);
-  else
-		apropos("freq_remove");
-	end;
-
-case {"freq_zero"}
-	if (eing_num > 2)
-		put();
-		ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
-		ftoi=get_index(str2num(substring(eingaben,3)), freqvec);
-		%offset = timevec(ttoi+1) - timevec(tfromi);
-		%freqvec(min(ffromi,ftoi):max(ffromi,ftoi))=[];
-		%timevec(tfromi:end)=timevec(tfromi:end)-offset;
-		mdata(min(ffromi,ftoi):max(ffromi,ftoi),:)=0;
-		printf("  datapoints %d - %d set to 0\n", ffromi, ftoi);
-	else
-		apropos("freq_zero");
-	end;
-
-case {"limit"}    %PF
-  if ( eing_num >= 3 )
-    if( eing_num >= 5)
-      upperTlim = str2num(substring(eingaben,4));
-      lowerTlim = str2num(substring(eingaben,5));
-      if(lowerTlim>upperTlim)
-        tempT=lowerTlim;
-        lowerTlim=upperTlim;
-        upperTlim=tempT;
-      endif;
-      upperTind=time_get_index(upperTlim,timevec);
-      lowerTind=time_get_index(lowerTlim,timevec);
-    else
-      upperTind=length(timevec);
-      lowerTind=1;
-    endif;
-
-    put();
-    add_to_history("limit");
-    upperZlim=str2num(substring(eingaben,2));
-    lowerZlim=str2num(substring(eingaben,3));
-    if(lowerZlim>upperZlim)
-        tempZ=lowerZlim;
-        lowerZlim=upperZlim;
-        upperZlim=tempZ;
-    endif;
-
-    for i=1:rows(mdata)
-      for j=lowerTind:upperTind
-        if (mdata(i,j)>upperZlim)
-          mdata(i,j)=upperZlim;
-        elseif(mdata(i,j)<lowerZlim)
-          mdata(i,j)=lowerZlim;
-        endif;
-      endfor
-    endfor;
-  else
-    apropos("limit");
-  endif;
-
-case {"cut" }
-    if ( eing_num >= 2 )
+  case {"timekill" "tk" }
+    if (eing_num > 2)
       put();
-      add_to_history("unset pretime");
-      if ( strcmp(substring(eingaben,2),"pretime") )
-
-
-      else
-	startparameter=substring(eingaben,2);
-	if ( eing_num == 3 )
-    	        stopparameter=substring(eingaben,3);
-        else
-		stopparameter="end";
-    	end;
-	if ( strcmp(startparameter,"-") | strcmp(startparameter,"start") )
-    		start_index = 1;
-        else
-    		start_area = str2num(substring(eingaben,2));
-		if ( start_area < timevec(1) )
-		    start_index = 1;
-		else
-    		    start_index = time_get_index(start_area, timevec);
-		end;
-        endif;
-        if ( strcmp(stopparameter,"-") | strcmp(stopparameter,"end"))
-    	    stop_index = length(timevec);
-        else
-    	    stop_area  = str2num(substring(eingaben,3));
-    	    stop_index = time_get_index(stop_area, timevec);
-    	endif;
-        new_timevec = timevec(start_index:stop_index);
-        new_mdata = mdata(:,start_index:stop_index);
-#      	clear timevec; clear mdata;
-        timevec = new_timevec; mdata = new_mdata;
-        clear new_timevec; clear new_mdata;
-      end;
+      tfromi=time_get_index(str2num(substring(eingaben,2)), timevec);
+      ttoi=time_get_index(str2num(substring(eingaben,3)),timevec);
+      offset = timevec(ttoi+1) - timevec(tfromi);
+      timevec(tfromi:ttoi)=[];
+      timevec(tfromi:end)=timevec(tfromi:end)-offset;
+      mdata(:,tfromi:ttoi)=[];
     else
-      apropos("cut");
+      apropos("timekill");
+    end;
+
+  case {"remove" }
+    if (eing_num > 2)
+      put();
+      tfromi=time_get_index(str2num(substring(eingaben,2)), timevec);
+      ttoi=time_get_index(str2num(substring(eingaben,3)),timevec);
+      %offset = timevec(ttoi+1) - timevec(tfromi);
+      timevec(tfromi:ttoi)=[];
+      %timevec(tfromi:end)=timevec(tfromi:end)-offset;
+      mdata(:,tfromi:ttoi)=[];
+    else
+      apropos("remove");
+    end;
+
+  case { "freq_index" }
+    if (eing_num > 1)
+      printf("  Element No. %d\n", get_index(str2num(substring(eingaben,2)),freqvec));
     endif;
+
+  case {"freq_remove" }
+    if (eing_num > 2)
+      put();
+      ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
+      ftoi=get_index(str2num(substring(eingaben,3)), freqvec);
+      %offset = timevec(ttoi+1) - timevec(tfromi);
+      freqvec(min(ffromi,ftoi):max(ffromi,ftoi))=[];
+      %timevec(tfromi:end)=timevec(tfromi:end)-offset;
+      mdata(min(ffromi,ftoi):max(ffromi,ftoi),:)=[];
+      printf("  Removed datapoints %d - %d\n", ffromi, ftoi);
+    elseif (eing_num > 1)
+      put();
+      ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
+      freqvec(ffromi)=[];
+      mdata(ffromi,:)=[];
+      printf("  Removed datapoint %d\n", ffromi);
+    else
+      apropos("freq_remove");
+    end;
+
+  case {"freq_zero"}
+    if (eing_num > 2)
+      put();
+      ffromi=get_index(str2num(substring(eingaben,2)), freqvec);
+      ftoi=get_index(str2num(substring(eingaben,3)), freqvec);
+      %offset = timevec(ttoi+1) - timevec(tfromi);
+      %freqvec(min(ffromi,ftoi):max(ffromi,ftoi))=[];
+      %timevec(tfromi:end)=timevec(tfromi:end)-offset;
+      mdata(min(ffromi,ftoi):max(ffromi,ftoi),:)=0;
+      printf("  datapoints %d - %d set to 0\n", ffromi, ftoi);
+    else
+      apropos("freq_zero");
+    end;
+
+  case {"limit"}    %PF
+    if ( eing_num >= 3 )
+      if( eing_num >= 5)
+        upperTlim = str2num(substring(eingaben,4));
+        lowerTlim = str2num(substring(eingaben,5));
+        if(lowerTlim>upperTlim)
+          tempT=lowerTlim;
+          lowerTlim=upperTlim;
+          upperTlim=tempT;
+        endif;
+        upperTind=time_get_index(upperTlim,timevec);
+        lowerTind=time_get_index(lowerTlim,timevec);
+      else
+        upperTind=length(timevec);
+        lowerTind=1;
+      endif;
+
+      put();
+      add_to_history("limit");
+      upperZlim=str2num(substring(eingaben,2));
+      lowerZlim=str2num(substring(eingaben,3));
+      if(lowerZlim>upperZlim)
+          tempZ=lowerZlim;
+          lowerZlim=upperZlim;
+          upperZlim=tempZ;
+      endif;
+
+      for i=1:rows(mdata)
+        for j=lowerTind:upperTind
+          if (mdata(i,j)>upperZlim)
+            mdata(i,j)=upperZlim;
+          elseif(mdata(i,j)<lowerZlim)
+            mdata(i,j)=lowerZlim;
+          endif;
+        endfor
+      endfor;
+    else
+      apropos("limit");
+    endif;
+
+  case {"cut" }
+      if ( eing_num >= 2 )
+        put();
+        add_to_history("unset pretime");
+        if ( strcmp(substring(eingaben,2),"pretime") )
+
+
+        else
+    startparameter=substring(eingaben,2);
+    if ( eing_num == 3 )
+                stopparameter=substring(eingaben,3);
+          else
+      stopparameter="end";
+        end;
+    if ( strcmp(startparameter,"-") || strcmp(startparameter,"start") )
+          start_index = 1;
+          else
+          start_area = str2num(substring(eingaben,2));
+      if ( start_area < timevec(1) )
+          start_index = 1;
+      else
+              start_index = time_get_index(start_area, timevec);
+      end;
+          endif;
+          if ( strcmp(stopparameter,"-") || strcmp(stopparameter,"end"))
+            stop_index = length(timevec);
+          else
+            stop_area  = str2num(substring(eingaben,3));
+            stop_index = time_get_index(stop_area, timevec);
+        endif;
+          new_timevec = timevec(start_index:stop_index);
+          new_mdata = mdata(:,start_index:stop_index);
+  #      	clear timevec; clear mdata;
+          timevec = new_timevec; mdata = new_mdata;
+          clear new_timevec; clear new_mdata;
+        end;
+      else
+        apropos("cut");
+      endif;
 
   case {"extend" }
-	if ( eing_num>=2 )				% extends the current dataset in time
-		if (eing_num > 2) %			estimate spectrum as average
-			start_area=time_get_index(str2num(substring(eingaben,2)),timevec);
-			stop_area=time_get_index(str2num(substring(eingaben,3)),timevec);
-			extend_until = str2num(substring(eingaben,4));
-			extend_spectrum = mean(mdata(:,start_area:stop_area),2);
-			% clear start_area; clear stop_area;
-		else
-			extend_spectrum = mdata(:,columns(mdata));		% if no range specified, use last spectrum
-			extend_until = str2num(substring(eingaben, 2));
-		endif;
-		extend_step=timevec(length(timevec))-timevec(length(timevec)-1);
-		i=length(timevec);
-		do
-			i++;
-			timevec(i) = timevec(i-1)+extend_step;
-			mdata(:,i) = extend_spectrum;
-		until (timevec(i)>=extend_until);
-		% clear extend_spectrum; clear extend_until; clear extend_step;
-	else
-		printf(" Usage: extend <endtime> OR extend av1 av2 endtime\n");
-		apropos("extend");
-	endif;
+    if ( eing_num>=2 )				% extends the current dataset in time
+      if (eing_num > 2) %			estimate spectrum as average
+        start_area=time_get_index(str2num(substring(eingaben,2)),timevec);
+        stop_area=time_get_index(str2num(substring(eingaben,3)),timevec);
+        extend_until = str2num(substring(eingaben,4));
+        extend_spectrum = mean(mdata(:,start_area:stop_area),2);
+        % clear start_area; clear stop_area;
+      else
+        extend_spectrum = mdata(:,columns(mdata));		% if no range specified, use last spectrum
+        extend_until = str2num(substring(eingaben, 2));
+      endif;
+      extend_step=timevec(length(timevec))-timevec(length(timevec)-1);
+      i=length(timevec);
+      do
+        i++;
+        timevec(i) = timevec(i-1)+extend_step;
+        mdata(:,i) = extend_spectrum;
+      until (timevec(i)>=extend_until);
+      % clear extend_spectrum; clear extend_until; clear extend_step;
+    else
+      printf(" Usage: extend <endtime> OR extend av1 av2 endtime\n");
+      apropos("extend");
+    endif;
+
   case {"cutwz" }
     if (eing_num>=2)
-	put();
-	startparameter = substring(eingaben,2);
-	stopparameter = substring(eingaben,3);
-	[startwert, realsta_wz] = ir_get_index(str2num(startparameter),freqvec);
-	[stopwert, realsto_wz] = ir_get_index(str2num(stopparameter),freqvec);
-	if (stopwert<startwert)
-	    h=stopwert;
-	    stopwert=startwert;
-	    startwert=h;
-	end;
-	printf("  Bereich: %f - %f\n", realsta_wz, realsto_wz);
-	new_freqvec = freqvec(startwert:stopwert);
-	new_mdata=mdata(startwert:stopwert,:);
-	freqvec = new_freqvec; mdata = new_mdata;
-	clear new_freqvec; clear new_mdata;
+      put();
+      startparameter = substring(eingaben,2);
+      stopparameter = substring(eingaben,3);
+      [startwert, realsta_wz] = ir_get_index(str2num(startparameter),freqvec);
+      [stopwert, realsto_wz] = ir_get_index(str2num(stopparameter),freqvec);
+      if (stopwert<startwert)
+          h=stopwert;
+          stopwert=startwert;
+          startwert=h;
+      end;
+      printf("  Bereich: %f - %f\n", realsta_wz, realsto_wz);
+      new_freqvec = freqvec(startwert:stopwert);
+      new_mdata=mdata(startwert:stopwert,:);
+      freqvec = new_freqvec; mdata = new_mdata;
+      clear new_freqvec; clear new_mdata;
     else
 	apropos("cutwz");
   endif;
 
- case {"integ"}             %Integration einer Bande über 3D-Datensatz; Paul Fischer
+  case {"integ"}             %Integration einer Bande über 3D-Datensatz; Paul Fischer
     if (eing_num>=3)
       wz_border1 = str2num(substring(eingaben, 2));
       wz_border2 = str2num(substring(eingaben, 3));
@@ -2854,12 +2858,11 @@ case {"cut" }
     else
       apropos("integ");
     end
- case {"stitch"}
-    if ( eing_num >= 3 )
-      printf("Spectra will be stitched and overlapp averaged.")
-    endif
 
- case {"baseline" "bl" }		# Basislinienkorrektrur anhand der PRE_TIME
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Baseline correction methods
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+  case {"baseline" "bl" }		# Basislinienkorrektrur anhand der PRE_TIME
     if ( eing_num >= 2 )
         switch ( substring(eingaben,2) )
 	  case "avspec"						% jedes Spektrum wird einzeln auf die Nullinie verschoben
@@ -2968,6 +2971,7 @@ case {"cut" }
 		    mdata(:,i)=mdata(:,i)-baseline;
 	    end
 	    baseline_info="fitdata(:,1)";
+
 	  case "absorbance"
 	    put();
 	    index_start = time_get_index(PRE_TIME_START,timevec);
@@ -2977,45 +2981,8 @@ case {"cut" }
 		    mdata(:,i) = log(baseline / mdata(:,i));
 	    end;
 	    baseline_info=sprintf("Absorbance (Blank: %f-%f [Specs: %d-%d])", PRE_TIME_START, PRE_TIME, index_start, index_stop);
-	  case "pretime_old"					% Pretime als Grundlinie Abziehen
-	    put();							% TODO: diese Funktion loeschen
-	    index_start = 1;
-	    if ( REACTION_START_INDEX > 5 )
-			  index_stop = REACTION_START_INDEX-4;		%  Bereich verkleinern, um sicherzugehen...
-	    else
-			  printf("  Ende der Vorperiode festlegen:\n");
-			  adjust_data();
-			  index_stop = REACTION_START_INDEX;
-	    end;
-	    options = [0,1e-10];					% Das muss möglicherweise geändert werden
-	    printf("  Grundlinienkorrektur: t(%d)=%f - t(%d)=%f\n", index_start, timevec(index_start), index_stop, timevec(index_stop) );
-	    x_fit=timevec(index_start:index_stop);
-	    minfunc=@lin_fit;"baseline"
-	    pretime_coeff=[0,0];
-	    tic();
-	    for i=1:length(freqvec)
-        y_fit=mdata(i,index_start:index_stop);
-        [ fitpar, fitfun ] = fminsearch(minfunc, pretime_coeff, options, 1, x_fit, y_fit);
-        % fitpar
-        pretime_coeff = fitpar;
-        if (LIVE_MODE)
-            fig(FIG_LIVE);
-            plot(timevec,mdata(i,:), timevec, (fitpar(1)*timevec + fitpar(2)));
-                 %			plot(x_fit, y_fit, x_fit, (x_fit*fitpar(1)+fitpar(2)));
-            plot_label=sprintf("%d/%d: %f", i, length(freqvec), freqvec(i));
-            legend(plot_label);
-            drawnow();
-        end;
-        baseline_parameters_m(i)=fitpar(1);
-        baseline_parameters_n(i)=fitpar(2);
-        mdata(i,:) = mdata(i,:) - ( fitpar(1)*timevec + fitpar(2) );
-        fflush(stdout);
-	    end;
-	    toc()
-	    plot(freqvec, baseline_parameters_m);
-	    drawnow();
-	    baseline_info = "Pretime linear";
-	  case "pretime"					% Pretime als Grundlinie Abziehen
+
+	  case "pretime"					% linear fit to baseline is extrapolated and subtracted from the whole set for each wavenumber
 	    put();
 	    index_start = 1;
 	    if ( REACTION_START_INDEX > 5 )
@@ -3039,7 +3006,6 @@ case {"cut" }
         if (LIVE_MODE)
             fig(FIG_LIVE);
             plot(timevec,mdata(i,:), timevec, (fitpar(1)*timevec + fitpar(2)));
-    %			plot(x_fit, y_fit, x_fit, (x_fit*fitpar(1)+fitpar(2)));
             plot_label=sprintf("%d/%d: %f", i, length(freqvec), freqvec(i));
             legend(plot_label);
             drawnow();
@@ -3171,7 +3137,7 @@ case {"cut" }
 					if (LIVE_MODE)
 						fig(FIG_LIVE);
 						plot(freqvec, mdata(:,k), freqvec, splval', freqvec, (mdata(:,k)-splval'));
-						plot_label=sprintf("%d/%d: %f", k, length(timevec), timevec(i));
+						plot_label=sprintf("%d/%d: %f", k, length(timevec), timevec(k));
 						legend(plot_label);
 						drawnow();
 					end;
@@ -3242,33 +3208,6 @@ case {"cut" }
         printf(" Usage: baseline water <lower limit> <upper limit>\n");
       endif
 
-	  case "matthias"
-								% Baselinekorrektur Matthias - Rhodopsinoptimiert
-      put();
-      bl_cr_1 = [1785, 1796];
-      bl_cr_2 = [1030, 1050];
-      %bl_cr_2 = [1330, 1350];
-      bl_1(1) = ir_get_index(bl_cr_1(1), freqvec);
-      bl_1(2) = ir_get_index(bl_cr_1(2), freqvec);
-      bl_2(1) = ir_get_index(bl_cr_2(1), freqvec);
-      bl_2(2) = ir_get_index(bl_cr_2(2), freqvec);
-
-      % Mittelwerte X
-
-      x_bl_1 = mean(freqvec(bl_1(2):bl_1(1)));
-      x_bl_2 = mean(freqvec(bl_2(2):bl_2(1)));
-      x_bl_dx = x_bl_2 - x_bl_1;
-
-      for k=1:length(timevec)
-        y_bl_1 = mean(mdata(bl_1(2):bl_1(1),k));
-        y_bl_2 = mean(mdata(bl_2(2):bl_2(1),k));
-        y_bl_dy = y_bl_2 - y_bl_1;
-        m_bl = y_bl_dy / x_bl_dx;
-        n_bl = y_bl_2 - m_bl*x_bl_2;
-        corr_bl = m_bl.*freqvec+n_bl;
-        mdata(:,k) = mdata(:,k) - corr_bl;
-      end;
-      baseline_info="Linear Function with 2 areas";
 	  case "prespline"
 						% Die Vorperiode sinnvoll mitteln, daraus eine Splinefunktion ermitteln und diese gefittet
 						% abziehen
@@ -3397,10 +3336,6 @@ case {"cut" }
 	  %close (zpb);
 	    toc()
 	    baseline_info = "Pretime appoximation (prespline)";
-	case "rhodopsin"
-		add_to_history("baseline prespline");
-		add_to_history("baseline linear");
-		baseline_info = "prespline + linear";
 
   case "fftkin"         % Fourierfilterung der Kinetiken
     put();
@@ -3436,7 +3371,7 @@ case {"cut" }
     end;
 
 
-	otherwise
+	  otherwise
 	    printf("  Unbekannte Funktion\n");
 	    apropos("baseline");
         endswitch;
@@ -3508,7 +3443,7 @@ case {"cut" }
 		    fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))";	# Startparameter (noch automatisch zuweisen!!)
 		    printf ("  Warnung: unbekannter Parameter!\n");
 	  endswitch;
-	    weiter = 0;
+	  weiter = 0;
 		clf();
 		plot_label = sprintf("-;Trace no. %d;0", trace_to_go);
 		plot(timevec, y_to_fit', plot_label);
@@ -3524,408 +3459,397 @@ case {"cut" }
       printf(" Funktion: %s\n", fit_info);
       printf(" Parameter: pin = [");
 		for i=1:(fit_order*2+1)
-		    printf("%f", pin(i));
-		    if( (i==1) | (i==3) | (i==5) ), printf("|"); else printf(", "); end;
+      printf("%f", pin(i));
+      if( (i==1) | (i==3) | (i==5) ), printf("|"); else printf(", "); end;
 		end;
       printf("]\n");
       printf("  SVDFit Trace Nr. %d ", trace_to_go);
       action=input("> ","s");
-		if ( strcmp(action,"x") | strcmp(action,"quit") | strcmp(action,"exit") )
-		    weiter = 1;
-		elseif ( strcmp(action,"fit") )
-		    clf();
-		    subplot(2,1,1);
-		    [f_f,f_p,f_kvg,f_iter,f_corp,f_covp,f_covr,f_stdresid,f_Z,f_r2] = leasqr2(timevec,y_to_fit',pin,F,pin_constraints);
-		    plot_label = sprintf("-;Trace no. %d;0", trace_to_go);
-		    plot(timevec, y_to_fit', plot_label);
-		    hold on;
-		    %plot_label = sprintf("-;Startparameter;1");
-		    %startfunc = F(timevec, pin);
-		    %plot(timevec, startfunc, plot_label);
-		    plot_label = sprintf("-;fit;3");
-		    plot(timevec, f_f, plot_label);
-		    subplot(2,1,2);
-		    plot_label = sprintf("-;residual;0");
-		    plot(timevec, (y_to_fit - f_f), plot_label);
-		    subplot(2,1,1);
-		    % Die Parameter sortieren:
+      if ( strcmp(action,"x") | strcmp(action,"quit") | strcmp(action,"exit") )
+        weiter = 1;
+      elseif ( strcmp(action,"fit") )
+        clf();
+        subplot(2,1,1);
+        [f_f,f_p,f_kvg,f_iter,f_corp,f_covp,f_covr,f_stdresid,f_Z,f_r2] = leasqr2(timevec,y_to_fit',pin,F,pin_constraints);
+        plot_label = sprintf("-;Trace no. %d;0", trace_to_go);
+        plot(timevec, y_to_fit', plot_label);
+        hold on;
+        %plot_label = sprintf("-;Startparameter;1");
+        %startfunc = F(timevec, pin);
+        %plot(timevec, startfunc, plot_label);
+        plot_label = sprintf("-;fit;3");
+        plot(timevec, f_f, plot_label);
+        subplot(2,1,2);
+        plot_label = sprintf("-;residual;0");
+        plot(timevec, (y_to_fit - f_f), plot_label);
+        subplot(2,1,1);
+        % Die Parameter sortieren:
 
-		    p_matrix=0;
-		    for i=1:fit_order
-			p_matrix(i,1) = f_p((i-1)*2+2);		% 1. Parameter ist Y-Verschiebung
-			p_matrix(i,2) = f_p((i-1)*2+3);
-		    end
-		    p_matrix = sort_matrix(p_matrix,2);			% nach k's sortieren
-    		    for i=1:fit_order				% zurückschreiben
-			f_p((i-1)*2+2) = p_matrix(i,1);
-			f_p((i-1)*2+3) = p_matrix(i,2);
-		    end
+        p_matrix=0;
+        for i=1:fit_order
+          p_matrix(i,1) = f_p((i-1)*2+2);		% 1. Parameter ist Y-Verschiebung
+          p_matrix(i,2) = f_p((i-1)*2+3);
+        end
+        p_matrix = sort_matrix(p_matrix,2);			% nach k's sortieren
+        for i=1:fit_order				% zurückschreiben
+          f_p((i-1)*2+2) = p_matrix(i,1);
+          f_p((i-1)*2+3) = p_matrix(i,2);
+        end
 
-		    printf("**************************************************************************************\n");
-		    printf("  Funktion: %s\n", fit_info);
-		    printf(" Fitparameter: f_p = [");
-		    for i=1:(fit_order*2+1)
-			printf("%f", f_p(i));
-			if( (i==1) | (i==3) | (i==5) ), printf("|"); else printf(", "); end;
-		    end;
-		    printf("]\n");
-		    printf("  r_square: %f\n", f_r2);
-		    printf("**************************************************************************************\n");
-		else
-		    eval(action);
-		    clf();
-		    plot_label = sprintf("-;Trace no. %d;0", trace_to_go);
-		    plot(timevec, y_to_fit', plot_label);
-		    hold on;
-		    plot_label = sprintf("-;Startparameter;1");
-		    startfunc = F(timevec, pin);
-		    plot(timevec, startfunc, plot_label);
-		    xlabel(time_axis);
-		    ylabel(arbitrary_axis);
-		endif;
+        printf("**************************************************************************************\n");
+        printf("  Funktion: %s\n", fit_info);
+        printf(" Fitparameter: f_p = [");
+        for i=1:(fit_order*2+1)
+          printf("%f", f_p(i));
+          if( (i==1) | (i==3) | (i==5) ), printf("|"); else printf(", "); end;
+        end;
+        printf("]\n");
+        printf("  r_square: %f\n", f_r2);
+        printf("**************************************************************************************\n");
+      else
+        eval(action);
+        clf();
+        plot_label = sprintf("-;Trace no. %d;0", trace_to_go);
+        plot(timevec, y_to_fit', plot_label);
+        hold on;
+        plot_label = sprintf("-;Startparameter;1");
+        startfunc = F(timevec, pin);
+        plot(timevec, startfunc, plot_label);
+        xlabel(time_axis);
+        ylabel(arbitrary_axis);
+      endif;
 	    until (weiter);
 	    SVD_FIT(trace_to_go) = 1;
 	    % jetzt die Werte in den Report �bernehmen:
-		svdfit(trace_to_go).values = f_f;				# die Werte
-		svdfit(trace_to_go).parameters = f_p;			# Parameter als Spaltenmatrix (1. Spalte = 1. Parametersatz)
-		svdfit(trace_to_go).convergence = f_kvg;			# Konvergenz ja/nein
-		svdfit(trace_to_go).stdresid = f_stdresid;			# Die Residuen  DIE NOCH PLOTTEN!!
-		svdfit(trace_to_go).confidence = f_Z;
-		svdfit(trace_to_go).rsquare = f_r2;
-		fit_report = sprintf("  SVD Komponente Nr. %d: %s\n", trace_to_go, fit_info);
-		fit_report = sprintf("%s				Konvergenz: %d\n", fit_report, f_kvg);
-		fit_report = sprintf("%s				Parameter: 	a1=%f\n", fit_report,f_p(1));
-		for j=2:length(svdfit(trace_to_go).parameters)
-		    fit_report = sprintf("%s						a%d=%f\n", fit_report, j, f_p(j));
-		    if ( j==3 )
-			fit_report = sprintf("%s						(t1/2(1)=%f)\n", fit_report, -log(0.5)/f_p(j));
-		    endif;
-		    if ( j==5 )
-			fit_report = sprintf("%s						(t1/2(2)=%f)\n", fit_report, -log(0.5)/f_p(j));
-		    endif;
-		    if ( j==7 )
-			fit_report = sprintf("%s						(t1/2(2)=%f)\n", fit_report, -log(0.5)/f_p(j));
-		    endif;
-		endfor;
-		svdfit(trace_to_go).report=fit_report;
-		printf("%s\n", fit_report);
+      svdfit(trace_to_go).values = f_f;				# die Werte
+      svdfit(trace_to_go).parameters = f_p;			# Parameter als Spaltenmatrix (1. Spalte = 1. Parametersatz)
+      svdfit(trace_to_go).convergence = f_kvg;			# Konvergenz ja/nein
+      svdfit(trace_to_go).stdresid = f_stdresid;			# Die Residuen  DIE NOCH PLOTTEN!!
+      svdfit(trace_to_go).confidence = f_Z;
+      svdfit(trace_to_go).rsquare = f_r2;
+      fit_report = sprintf("  SVD Komponente Nr. %d: %s\n", trace_to_go, fit_info);
+      fit_report = sprintf("%s				Konvergenz: %d\n", fit_report, f_kvg);
+      fit_report = sprintf("%s				Parameter: 	a1=%f\n", fit_report,f_p(1));
+      for j=2:length(svdfit(trace_to_go).parameters)
+          fit_report = sprintf("%s						a%d=%f\n", fit_report, j, f_p(j));
+          if ( j==3 )
+        fit_report = sprintf("%s						(t1/2(1)=%f)\n", fit_report, -log(0.5)/f_p(j));
+          endif;
+          if ( j==5 )
+        fit_report = sprintf("%s						(t1/2(2)=%f)\n", fit_report, -log(0.5)/f_p(j));
+          endif;
+          if ( j==7 )
+        fit_report = sprintf("%s						(t1/2(2)=%f)\n", fit_report, -log(0.5)/f_p(j));
+          endif;
+      endfor;
+      svdfit(trace_to_go).report=fit_report;
+      printf("%s\n", fit_report);
     else
-	printf("  Syntax: svdfit <trace>\n");
-	printf("	  svdfit <trace> <order>\n");
+      printf("  Syntax: svdfit <trace>\n");
+      printf("	  svdfit <trace> <order>\n");
     endif;
 
   case {"fitspectra" }				% 	Wrapperfunktion f�r lsqfit; den aktuellen Datensatz an gegebende Basisspektren fitten
 											% 	Baustelle
 											% 	TODO: fitspectra svd | rotation | globalfit
-	printf("  Fit erfolgt (fminsearch):\n");
-	printf("  Anpassen der Basis:\n");
-	[fit_mdata, fit_coefficients, fit_residuals] = lsqfit(freqvec, mdata, base_matrix,options);
-	printf(" Fit durchgef�hrt. fit_mdata, fit_coefficients, fit_residuals erstellt,\n");
-	% for i=1:length(fit_coefficients)
-	%	for j=1:length(fit_coefficients{1})
-	%		fit_pmatrix(i,j) = fit_coefficients{i}(j);
-	%	end;
-	% end;
-	printf("  Ok.\n");
+    printf("  Fit erfolgt (fminsearch):\n");
+    printf("  Anpassen der Basis:\n");
+    [fit_mdata, fit_coefficients, fit_residuals] = lsqfit(freqvec, mdata, base_matrix,options);
+    printf(" Fit durchgef�hrt. fit_mdata, fit_coefficients, fit_residuals erstellt,\n");
+    % for i=1:length(fit_coefficients)
+    %	for j=1:length(fit_coefficients{1})
+    %		fit_pmatrix(i,j) = fit_coefficients{i}(j);
+    %	end;
+    % end;
+    printf("  Ok.\n");
   case {"fitspectra2" }				% 	Wrapperfunktion f�r lsqfit; den aktuellen Datensatz an gegebende Basisspektren fitten
 											% 	Baustelle
 											% 	TODO: fitspectra svd | rotation | globalfit
-	printf("  Fit erfolgt (fminsearch):\n");
-	printf("  Anpassen der Basis:\n");
-	[fit_mdata, fit_coefficients, fit_residuals] = lsqfit(freqvec, mdata, base_matrix,options);
-	printf(" Fit durchgef�hrt. fit_mdata, fit_coefficients, fit_residuals erstellt,\n");
-	% for i=1:length(fit_coefficients)
-	%	for j=1:length(fit_coefficients{1})
-	%		fit_pmatrix(i,j) = fit_coefficients{i}(j);
-	%	end;
-	% end;
-	printf("  Ok.\n");
+    printf("  Fit erfolgt (fminsearch):\n");
+    printf("  Anpassen der Basis:\n");
+    [fit_mdata, fit_coefficients, fit_residuals] = lsqfit(freqvec, mdata, base_matrix,options);
+    printf(" Fit durchgef�hrt. fit_mdata, fit_coefficients, fit_residuals erstellt,\n");
+    % for i=1:length(fit_coefficients)
+    %	for j=1:length(fit_coefficients{1})
+    %		fit_pmatrix(i,j) = fit_coefficients{i}(j);
+    %	end;
+    % end;
+    printf("  Ok.\n");
+
   case {"globalfit_init" "gfi" }			%	Startparameter fuer den Globalfit festlegen/aendern
-	gf_cmpnts = input("  Anzahl der Komponenten: ");
-	printf("  Eingabe der Startparameter:\n");
-	for i=1:gf_cmpnts
-		printf("  Parameter %d: ",i);
-		gf_prmtr = input(" ");
-		gf_k_start(i)=gf_prmtr/10;
-		gf_k_stop(i)=gf_prmtr*10;
-	end;
-	%gf_ITERATIONS=2;					% might be changed
-%	if ( 0==message("Globalfit jetzt starten?","question") )
-	dummy=sprintf("gf %d",gf_cmpnts);
-	add_to_history(dummy);
-	add_to_history("% Globalfit abgeschlossen.");
-	add_to_history("% <<p gf>> zum Anzeigen verwenden");
-	add_to_history("% <<pp filename>> speichert als WMF");
-%	else
-%		printf("  <gf %d> zum Starten verwenden\n", gf_cmpnts);
-%	end;
+    gf_cmpnts = input("  Anzahl der Komponenten: ");
+    printf("  Eingabe der Startparameter:\n");
+    for i=1:gf_cmpnts
+      printf("  Parameter %d: ",i);
+      gf_prmtr = input(" ");
+      gf_k_start(i)=gf_prmtr/10;
+      gf_k_stop(i)=gf_prmtr*10;
+    end;
+
+    dummy=sprintf("gf %d",gf_cmpnts);
+    add_to_history(dummy);
+    add_to_history("% Globalfit abgeschlossen.");
+    add_to_history("% <<p gf>> zum Anzeigen verwenden");
+    add_to_history("% <<pp filename>> speichert als WMF");
+
   case {"gfn" }
-	% Globalfit der SVD-Daten
-	printf("  Levenberg-Marquardt-Fit via leasqr\n");
-	printf("  WARNUNG: Experimentelle Funktion!\n");
-	printf("  Nur Daten der SVD!\n");
-	% if ( laststep!= SVD)
-	if (eing_num>1)
-		components = str2num(substring(eingaben,2));
-		LM_order = components;
-		weights = zeros(1,components);
-		for i=1:components
-		    kineticfun(:,i)=v(:,i);
-		    weights(i)=s(i,i)^2;			% Standardwichtung
-		end
+    % Globalfit der SVD-Daten
+    printf("  Levenberg-Marquardt-Fit via leasqr\n");
+    printf("  WARNUNG: Experimentelle Funktion!\n");
+    printf("  Nur Daten der SVD!\n");
+    % if ( laststep!= SVD)
+    if (eing_num>1)
+      components = str2num(substring(eingaben,2));
+      LM_order = components;
+      weights = zeros(1,components);
+      for i=1:components
+          kineticfun(:,i)=v(:,i);
+          weights(i)=s(i,i)^2;			% Standardwichtung
+      end
 
-		model = @gfit_expfun_LM;							% y = f(x,p)
-		kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
-		timevec_to_fit = timevec(REACTION_START_INDEX:end);
-		if (columns(timevec_to_fit)>rows(timevec_to_fit)), timevec_to_fit=timevec_to_fit'; end;		% Spaltenmatrix
-		timevec_to_fit = repmat(timevec_to_fit,1,components);
-		% Parametercodierung: A(1-exp(-kt))+o	A[components x components], k[components], o[components]
-		parameters = ones(1, components*components + 2*components);						% Startparameter fertigmachen
-% 																								function [f,p,kvg,iter,corp,covp,covr,stdresid,Z,r2]=
-%                  																						leasqr(x,y,pin,F,{stol,niter,wt,dp,dFdp,options})
-		[fun, fitparameter] = leasqr(timevec_to_fit, kinetic_to_fit, parameters, model);
-		printf("  Fertig. Parameter:\n");
-		fitparameter
+      model = @gfit_expfun_LM;							% y = f(x,p)
+      kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
+      timevec_to_fit = timevec(REACTION_START_INDEX:end);
+      if (columns(timevec_to_fit)>rows(timevec_to_fit)), timevec_to_fit=timevec_to_fit'; end;		% Spaltenmatrix
+      timevec_to_fit = repmat(timevec_to_fit,1,components);
+      % Parametercodierung: A(1-exp(-kt))+o	A[components x components], k[components], o[components]
+      parameters = ones(1, components*components + 2*components);						% Startparameter fertigmachen
+  % 																								function [f,p,kvg,iter,corp,covp,covr,stdresid,Z,r2]=
+  %                  																						leasqr(x,y,pin,F,{stol,niter,wt,dp,dFdp,options})
+      [fun, fitparameter] = leasqr(timevec_to_fit, kinetic_to_fit, parameters, model);
+      printf("  Fertig. Parameter:\n");
+      fitparameter
 
-	else
-		printf("  Benutzung: gfn <components>\n");
-	end;
+    else
+      printf("  Benutzung: gfn <components>\n");
+    end;
+
 %%%%%%%%%%%%%%%%%%%%%%%			Beginn globalfit leasqr (experimentell)
   case {"gfl_init" }					% Interaktive Zuordnung der Globalfitparameter           TODO!!! Options sind falsch gesetzt!!
-	      gfl_tmp_components = numinput("  Number of components: ",gfl_tmp_components);
-	      jn = input("  assign paramater initial values (y/n)? ","c");
-	      for i=1:gfl_tmp_components
-		      printf("Parameter %d:\n", i);
-		      gfl_tmp_params(i,1) = numinput("  parameter range START: ",gfl_tmp_params(i,1));
-		      gfl_tmp_params(i,2) = numinput("  parameter range STOP: ",gfl_tmp_params(i,2));
-		      if ( jn=='y' )
-			      gfl_tmp_params(i,3) = numinput("   parameter initial value: ", gfl_tmp_params(i,3));
-		      else
-			      gfl_tmp_params(i,3) = (gfl_tmp_params(i,1)+gfl_tmp_params(i,1))/2;
-		      end;
-	      end;
-	      jn = input("  exclude data from kinetics (y/n)? ","c");
-        if (jn=='y')
-          time_exclude=1;
-          time_exclude_from = numinput("  exclude from: ",time_exclude_from);
-          time_exclude_to = numinput("  exclude to: ",time_exclude_to);
-          time_exclude_from_idx = get_index(time_exclude_from, timevec)-REACTION_START_INDEX+1;
-          time_exclude_to_idx = get_index(time_exclude_to, timevec)-REACTION_START_INDEX+1;
-        else
-          time_exclude=0;
-        endif
-	      printf("  Global fit parameters set. You can use <<gfl>> without arguments now.\n");
-	      %gfl_tmp_params=1;
+    gfl_tmp_components = numinput("  Number of components: ",gfl_tmp_components);
+    jn = input("  assign paramater initial values (y/n)? ","c");
+    for i=1:gfl_tmp_components
+      printf("Parameter %d:\n", i);
+      gfl_tmp_params(i,1) = numinput("  parameter range START: ",gfl_tmp_params(i,1));
+      gfl_tmp_params(i,2) = numinput("  parameter range STOP: ",gfl_tmp_params(i,2));
+      if ( jn=='y' )
+        gfl_tmp_params(i,3) = numinput("   parameter initial value: ", gfl_tmp_params(i,3));
+      else
+        gfl_tmp_params(i,3) = (gfl_tmp_params(i,1)+gfl_tmp_params(i,1))/2;
+      end;
+    end;
+    jn = input("  exclude data from kinetics (y/n)? ","c");
+    if (jn=='y')
+      time_exclude=1;
+      time_exclude_from = numinput("  exclude from: ",time_exclude_from);
+      time_exclude_to = numinput("  exclude to: ",time_exclude_to);
+      time_exclude_from_idx = get_index(time_exclude_from, timevec)-REACTION_START_INDEX+1;
+      time_exclude_to_idx = get_index(time_exclude_to, timevec)-REACTION_START_INDEX+1;
+    else
+      time_exclude=0;
+    endif
+    printf("  Global fit parameters set. You can use <<gfl>> without arguments now.\n");
+    %gfl_tmp_params=1;
 
   case {"gfl" }
-  	  gf_METHOD="local least squares (gfl - leasqr)";
-	    gf_INITIAL_PARAMETERS="not saved";
-	    gf_STDRESID="not saved";
-	    gf_R2="not saved";
-	    gf_KONVERGENCE="not saved";
+    gf_METHOD="local least squares (gfl - leasqr)";
+    gf_INITIAL_PARAMETERS="not saved";
+    gf_STDRESID="not saved";
+    gf_R2="not saved";
+    gf_KONVERGENCE="not saved";
 
-	    printf("  Levenberg-Marquardt-Fit using leasqr\n");
-	    printf("  WARNING: Experimental function!\n");
-	    printf("  This ONLY uses data of the last SVD!\n");
-	    printf("  Usage: \n");
-	    printf("      gfl_init\n");
-	    printf("      gfl                 allows pre-definition of search area and starting values, 1 cycle\n");
-	    printf("      gfl <components>    no pre-definition, multiple cycles\n");
-	    printf("      gfl <components> <iterations>\n");
-	    printf("      gfl <components> <initial parameter #1> <initial parameter #2> ...\n");
-	    printf("  Use gfl_init to pre-define parameters and limits\n");
-	    iter = gf_ITERATIONS;
-	    % gfl_options.bounds=[];
-	    % Remove all variables which are to be defined later. This is just to be sure that nothing interferes...
-	    clear gfl_options;
+    printf("  Levenberg-Marquardt-Fit using leasqr\n");
+    printf("  WARNING: Experimental function!\n");
+    printf("  This ONLY uses data of the last SVD!\n");
+    printf("  Usage: \n");
+    printf("      gfl_init\n");
+    printf("      gfl                 allows pre-definition of search area and starting values, 1 cycle\n");
+    printf("      gfl <components>    no pre-definition, multiple cycles\n");
+    printf("      gfl <components> <iterations>\n");
+    printf("      gfl <components> <initial parameter #1> <initial parameter #2> ...\n");
+    printf("  Use gfl_init to pre-define parameters and limits\n");
+    iter = gf_ITERATIONS;
+    % gfl_options.bounds=[];
+    % Remove all variables which are to be defined later. This is just to be sure that nothing interferes...
+    clear gfl_options;
 
-	if (eing_num==1)								% Parameter aus den ueber gfl_prepare gespeicherten Daten holen
-		    components=gfl_tmp_components;			% Das betrifft nur die Parameter fuer die k's!!!
-		    iter=0;
-		    gf_INITIAL_PARAMETERS="";
-		    for i=1:components
-			    gf_INITIAL_PARAMETERS=sprintf("%s %f", gf_INITIAL_PARAMETERS, gfl_tmp_params(i,3));
-		    end;
-		    if ( gfl_tmp_params_adjusted==0)
-			    printf("  Warning: This function performes global fitting using standard startparameter and boundaries.\n");
-			    printf("  These parameter should be adjusted using <<gfl_init>> BEFORE applying <<gfl>> without arguments\n");
-			    printf("  Do not expect reasonable results!\n");
-		    end;
-		    %gfl_options.bounds=gfl_tmp_params(:,1:2);
+	  if (eing_num==1)								% Parameter aus den ueber gfl_prepare gespeicherten Daten holen
+      components=gfl_tmp_components;			% Das betrifft nur die Parameter fuer die k's!!!
+      iter=0;
+      gf_INITIAL_PARAMETERS="";
+      for i=1:components
+        gf_INITIAL_PARAMETERS=sprintf("%s %f", gf_INITIAL_PARAMETERS, gfl_tmp_params(i,3));
+      end;
+      if ( gfl_tmp_params_adjusted==0)
+        printf("  Warning: This function performes global fitting using standard startparameter and boundaries.\n");
+        printf("  These parameter should be adjusted using <<gfl_init>> BEFORE applying <<gfl>> without arguments\n");
+        printf("  Do not expect reasonable results!\n");
+      end;
+      %gfl_options.bounds=gfl_tmp_params(:,1:2);
 	  elseif (eing_num==2)
 		    components=str2num(substring(eingaben,2));
-	    elseif (eing_num==3)
-		    components=str2num(substring(eingaben,2));
-		    iter=str2num(substring(eingaben,3));
-	    elseif (eing_num>3)
-		    iter=0;
-		    components=str2num(substring(eingaben,2));
-		    for i=3:eing_num, gf_k_start(i-2)=str2num(substring(eingaben,i)); end;
-		    gf_INITIAL_PARAMETERS="";
-		    for i=1:components
-			    gf_INITIAL_PARAMETERS=sprintf("%s %f", gf_INITIAL_PARAMETERS, gf_k_start(i));
-		    end;
-	    end;
+    elseif (eing_num==3)
+      components=str2num(substring(eingaben,2));
+      iter=str2num(substring(eingaben,3));
+    elseif (eing_num>3)
+      iter=0;
+      components=str2num(substring(eingaben,2));
+      for i=3:eing_num, gf_k_start(i-2)=str2num(substring(eingaben,i)); end;
+      gf_INITIAL_PARAMETERS="";
+      for i=1:components
+        gf_INITIAL_PARAMETERS=sprintf("%s %f", gf_INITIAL_PARAMETERS, gf_k_start(i));
+      end;
+    end;
 
-	% Startparametermatrix erzeugen:
-	REACTIONS = components;				% Normalfall; Anzahl der k's. ggf. auch fuer ueber/ unterbestimmte Systeme machen!
-	OBSERVABLES = components;				% Anzahl der zu benutzenden V-Spuren
-	num_parameters = REACTIONS+REACTIONS*OBSERVABLES+OBSERVABLES;
-	% Parameterkonvention: [A; K; O] alle als Spaltenvektoren
-	for i=1:num_parameters
-		gfl_options.bounds(i,1:2)=[-Inf,Inf];
-	end;
-	if (iter>0)
-		pmt = pvariation(gf_k_start(1:OBSERVABLES), gf_k_stop(1:OBSERVABLES), iter)';
-		startparameter = ones(num_parameters, columns(pmt));
-		startparameter(OBSERVABLES+1:OBSERVABLES+REACTIONS,:)=pmt;
-	else							% Keine Variation der Startparameter
-		startparameter = ones(num_parameters,1);
-		for i=1:REACTIONS
-			%startparameter(OBSERVABLES+i)=gf_k_start(i);							% This is probably wrong; it does not set the right k parameter boundaries!   TODO ERROR
-			startparameter(REACTIONS*OBSERVABLES+i)=gfl_tmp_params(i,3);					% REACTIONS*OBSERVABLES+...
-			gfl_options.bounds(REACTIONS*OBSERVABLES+i,1:2) = gfl_tmp_params(i,1:2);
-		end;
-	end;
+    % Startparametermatrix erzeugen:
+    REACTIONS = components;				% Normalfall; Anzahl der k's. ggf. auch fuer ueber/ unterbestimmte Systeme machen!
+    OBSERVABLES = components;				% Anzahl der zu benutzenden V-Spuren
+    num_parameters = REACTIONS+REACTIONS*OBSERVABLES+OBSERVABLES;
+    % Parameterkonvention: [A; K; O] alle als Spaltenvektoren
+    for i=1:num_parameters
+      gfl_options.bounds(i,1:2)=[-Inf,Inf];
+    end;
+    if (iter>0)
+      pmt = pvariation(gf_k_start(1:OBSERVABLES), gf_k_stop(1:OBSERVABLES), iter)';
+      startparameter = ones(num_parameters, columns(pmt));
+      startparameter(OBSERVABLES+1:OBSERVABLES+REACTIONS,:)=pmt;
+    else							% Keine Variation der Startparameter
+      startparameter = ones(num_parameters,1);
+      for i=1:REACTIONS
+        %startparameter(OBSERVABLES+i)=gf_k_start(i);							% This is probably wrong; it does not set the right k parameter boundaries!   TODO ERROR
+        startparameter(REACTIONS*OBSERVABLES+i)=gfl_tmp_params(i,3);					% REACTIONS*OBSERVABLES+...
+        gfl_options.bounds(REACTIONS*OBSERVABLES+i,1:2) = gfl_tmp_params(i,1:2);
+      end;
+    end;
 
-	%printf("Startparameter: \n");
-	%startparameter
-	%printf("Bounds:\n");
-	%gfl_options.bounds
+    % zu fittenden Datensatz berechnen (ggf. Vorperiode rausnehmen)
+    weights = zeros(1,components);
+    clear kineticfun;
+    clear weights;
+    for i=1:components
+      kineticfun(:,i)=v(:,i);
+      weights(i)=s(i,i)^2;			% Standardwichtung
+    end
+    % V's sequentiell anordnen fuer LEASQR
 
+    kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
+    timevec_to_fit = timevec(REACTION_START_INDEX:end);
 
-	% zu fittenden Datensatz berechnen (ggf. Vorperiode rausnehmen)
-	weights = zeros(1,components);
-	clear kineticfun;
-	clear weights;
-	for i=1:components
-		kineticfun(:,i)=v(:,i);
-		weights(i)=s(i,i)^2;			% Standardwichtung
-	end
-	% V's sequentiell anordnen fuer LEASQR
+    if (VERBOSITY_LEVEL)
+      printf("Erstelle Zeitachse....\n");
+      fflush(stdout);
+    end;
 
-	kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
-	timevec_to_fit = timevec(REACTION_START_INDEX:end);
+    lltime=timevec_to_fit(:);												% Umwandeln in Spaltenvektoren
+    lltime=repmat(lltime,1,components);									% Fuer jede Komponente eine eigene Zeitspur erzeugen (f. leasqr benoetigt)
+    ltime=reshape(lltime,columns(lltime)*rows(lltime),1);						% x-Achse komplett sequentiell anordnen (eigentlich nur fuer leasqr-Uebergabe noetig)
 
-	if (VERBOSITY_LEVEL)
-		printf("Erstelle Zeitachse....\n");
-		fflush(stdout);
-	end;
-
-	lltime=timevec_to_fit(:);												% Umwandeln in Spaltenvektoren
-	lltime=repmat(lltime,1,components);									% Fuer jede Komponente eine eigene Zeitspur erzeugen (f. leasqr benoetigt)
-	ltime=reshape(lltime,columns(lltime)*rows(lltime),1);						% x-Achse komplett sequentiell anordnen (eigentlich nur fuer leasqr-Uebergabe noetig)
-
-	printf("fertig....\n");
-	fflush(stdout);
+    printf("fertig....\n");
+    fflush(stdout);
 
 
-	lkinetic = kinetic_to_fit'(:);											% Test is this is correct? (wg. u*s*vt)
+    lkinetic = kinetic_to_fit'(:);											% Test is this is correct? (wg. u*s*vt)
 
-	if (columns(startparameter)==1)
-    %% Test: for restricted fit, no weighting of the last kinetic component which is just return to the dark state:
-    %% Test: highly experimental
-    kinetic_weights=ones( size (lkinetic));
-    if (time_exclude > 0)                                              % Bereiche aus den Einzelnen Kinetiken loeschen
-      traces = size(lkinetic)/length(kinetic_to_fit);
-      kinetic_weights(time_exclude_from_idx:time_exclude_to_idx)=0;
-      for i=2:traces-1
-        kinetic_weights(i*length(kinetic_to_fit)+time_exclude_from_idx:i*length(kinetic_to_fit)+time_exclude_to_idx) = 0;
-      end
-    endif
-    if (GF_REJECT_LAST==1)
-        kinetic_weights((size(lkinetic)-length(kinetic_to_fit)):end)=0;
-        printf("  Warning: the last SVD component for Globalfit is not used for fitting.\n");
-        printf("  Use n+1 components for fitting\n");
-        printf("  Use GF_REJECT_LAST=0 to change this behaviour\n");
-		endif;
-    printf("  Doing restricted fit...\n"); fflush(stdout);
-		[f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, startparameter, @gfit_expfun_leasqr, 0.0001, 20, kinetic_weights, .001*ones(size(startparameter)), 'dfdp', gfl_options);
-		if (VERBOSITY_LEVEL), printf("  Refining restricted fit...\n"); end;
+    if (columns(startparameter)==1)
+      %% Test: for restricted fit, no weighting of the last kinetic component which is just return to the dark state:
+      %% Test: highly experimental
+      kinetic_weights=ones( size (lkinetic));
+      if (time_exclude > 0)                                              % Bereiche aus den Einzelnen Kinetiken loeschen
+        traces = size(lkinetic)/length(kinetic_to_fit);
+        kinetic_weights(time_exclude_from_idx:time_exclude_to_idx)=0;
+        for i=2:traces-1
+          kinetic_weights(i*length(kinetic_to_fit)+time_exclude_from_idx:i*length(kinetic_to_fit)+time_exclude_to_idx) = 0;
+        end
+      endif
+      if (GF_REJECT_LAST==1)
+          kinetic_weights((size(lkinetic)-length(kinetic_to_fit)):end)=0;
+          printf("  Warning: the last SVD component for Globalfit is not used for fitting.\n");
+          printf("  Use n+1 components for fitting\n");
+          printf("  Use GF_REJECT_LAST=0 to change this behaviour\n");
+      endif;
+      printf("  Doing restricted fit...\n"); fflush(stdout);
+      [f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, startparameter, @gfit_expfun_leasqr, 0.0001, 20, kinetic_weights, .001*ones(size(startparameter)), 'dfdp', gfl_options);
+      if (VERBOSITY_LEVEL), printf("  Refining restricted fit...\n"); end;
 
-		fflush(stdout);
-		[f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, f1_p, @gfit_expfun_leasqr, 0.0001, 20, kinetic_weights, .001*ones(size(f1_p)), 'dfdp', gfl_options);
-		%[f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, startparameter, @gfit_expfun_leasqr);
-		%[f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, f1_p, @gfit_expfun_leasqr);
-	else
-		printf("  Doing unrestricted fit...\n"); fflush(stdout);
-		% Jede Startparameterspalte einzeln, dann den besten Wert nehmen (im Sinne von groestes r2)
-		[f1_f, f1_p, kvg, iter, corp, covp, covr, stdresid, Z, r2] = leasqr(ltime, lkinetic, startparameter(:,1), @gfit_expfun_leasqr);
-		f1_p_best = f1_p;
-		r2_best=r2;
-		% zpb_handle=zenity_progress("% finished","auto-close");
-    zpb=waitbar(0, "Please Wait","createcancelbtn","close (zpb)");
-		for i=2:columns(startparameter)
-			%zenity_progress(zpb_handle, i/columns(startparameter));
-      waitbar(i/columns(startparameter), zpb);
-			printf("  initial guess: %d of %d\n", i, columns(startparameter)); fflush(stdout);
-			[f1_f, f1_p, kvg, iter, corp, covp, covr, stdresid, Z, r2] = leasqr(ltime, lkinetic, startparameter(:,i), @gfit_expfun_leasqr);
-			if (r2>r2_best)
-				f1_p_second = f1_p_best;
-				f1_p_best = f1_p;
-				r2_best=r2;
-			end;
-		end;
-    close(zpb);
-		if (VERBOSITY_LEVEL), printf("  Refining unrestricted fit...\n"); end;
-		fflush(stdout);
-		[f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, f1_p_best, @gfit_expfun_leasqr);
-	end;
+      fflush(stdout);
+      [f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, f1_p, @gfit_expfun_leasqr, 0.0001, 20, kinetic_weights, .001*ones(size(f1_p)), 'dfdp', gfl_options);
 
-	[AMatrix,KMatrix,OMatrix] = get_leas_parameter(f1_p);
-	                                                                                                 %       MARK
+    else
+      printf("  Doing unrestricted fit...\n"); fflush(stdout);
+      % Jede Startparameterspalte einzeln, dann den besten Wert nehmen (im Sinne von groestes r2)
+      [f1_f, f1_p, kvg, iter, corp, covp, covr, stdresid, Z, r2] = leasqr(ltime, lkinetic, startparameter(:,1), @gfit_expfun_leasqr);
+      f1_p_best = f1_p;
+      r2_best=r2;
+      zpb=waitbar(0, "Please Wait","createcancelbtn","close (zpb)");
+      for i=2:columns(startparameter)
+        waitbar(i/columns(startparameter), zpb);
+        printf("  initial guess: %d of %d\n", i, columns(startparameter)); fflush(stdout);
+        [f1_f, f1_p, kvg, iter, corp, covp, covr, stdresid, Z, r2] = leasqr(ltime, lkinetic, startparameter(:,i), @gfit_expfun_leasqr);
+        if (r2>r2_best)
+          f1_p_second = f1_p_best;
+          f1_p_best = f1_p;
+          r2_best=r2;
+        end;
+      end;
+      close(zpb);
+      if (VERBOSITY_LEVEL), printf("  Refining unrestricted fit...\n"); end;
+      fflush(stdout);
+      [f1_f, f1_p, f1_kvg, f1_iter, f1_corp, f1_covp, f1_covr, f1_stdresid, f1_Z, f1_r2] = leasqr(ltime, lkinetic, f1_p_best, @gfit_expfun_leasqr);
+    end;
 
-	% Rueckrechnen
-	u_r = u(:,1:components);
-	v_r = v(:,1:components);
-	s_r = s(1:components,1:components);
-	uu = u_r*s_r*AMatrix;
-	vv=zeros(max(size(timevec_to_fit)),components);
-	for i=1:components
-		    vv(:,i) = exp(-KMatrix(i)*timevec_to_fit);
-	end
+    [AMatrix,KMatrix,OMatrix] = get_leas_parameter(f1_p);
 
-	if (VERBOSITY_LEVEL)
-		printf("  B-spectra in uu(:,i); kinetics vectors vv(:,i)  (i=1..%d)\n", components);
-		printf("  Use <<save globalfit>> to store the calculated data\n");				% MARK
-		printf("  Please wait, plotting the result...\n");
-	end;
+    % Rueckrechnen
+    u_r = u(:,1:components);
+    v_r = v(:,1:components);
+    s_r = s(1:components,1:components);
+    uu = u_r*s_r*AMatrix;
+    vv=zeros(max(size(timevec_to_fit)),components);
+    for i=1:components
+          vv(:,i) = exp(-KMatrix(i)*timevec_to_fit);
+    end
 
-	fig(FIG_GLOBALFIT_RESULT);
-	clf();
+    if (VERBOSITY_LEVEL)
+      printf("  B-spectra in uu(:,i); kinetics vectors vv(:,i)  (i=1..%d)\n", components);
+      printf("  Use <<save globalfit>> to store the calculated data\n");				% MARK
+      printf("  Please wait, plotting the result...\n");
+    end;
 
-	uu = -uu;									% Umdrehen wg. Formel
+    fig(FIG_GLOBALFIT_RESULT);
+    clf();
 
-	for i=1:components
-	    subplot(components,2,(i-1)*2+1);
-	    plot(freqvec,uu(:,i));
-	    if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
-	    subplot(components,2,(i-1)*2+2);
-	    plot(timevec_to_fit',vv(:,i));						% size(vv(:,1)) = 0??????  TODO: Change this to plot data and fit
-	    % user_plot(timevec,kineticfun(:,i), timevec, fv(:,i));		% Hier nicht nötig, weil das ja schon in einem anderen Fenster ist.
-	end;
+    uu = -uu;									% Umdrehen wg. Formel
+
+    for i=1:components
+        subplot(components,2,(i-1)*2+1);
+        plot(freqvec,uu(:,i));
+        if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
+        subplot(components,2,(i-1)*2+2);
+        plot(timevec_to_fit',vv(:,i));						% size(vv(:,1)) = 0??????  TODO: Change this to plot data and fit
+        % user_plot(timevec,kineticfun(:,i), timevec, fv(:,i));		% Hier nicht nötig, weil das ja schon in einem anderen Fenster ist.
+    end;
 
 
-	%fig(100);
-	fv=(AMatrix*exp(-KMatrix*timevec_to_fit)+repmat(OMatrix,1,length(timevec_to_fit)))';
-	tvtf = repmat(timevec_to_fit',1,columns(kinetic_to_fit));
-	%plot(tvtf,kinetic_to_fit, tvtf,fv);
+    %fig(100);
+    fv=(AMatrix*exp(-KMatrix*timevec_to_fit)+repmat(OMatrix,1,length(timevec_to_fit)))';
+    tvtf = repmat(timevec_to_fit',1,columns(kinetic_to_fit));
+    %plot(tvtf,kinetic_to_fit, tvtf,fv);
 
-	gf_METHOD="Levenberg-M.";
-	gf_KONVERGENCE=sprintf("%d", f1_kvg);
-	gf_R2=sprintf("%f",f1_r2);
+    gf_METHOD="Levenberg-M.";
+    gf_KONVERGENCE=sprintf("%d", f1_kvg);
+    gf_R2=sprintf("%f",f1_r2);
 
-	if ( gf_KONVERGENCE==0 )
-		printf("  Warnung: Konvergenz wurde nicht erreicht.\n");
-	end;
+    if ( gf_KONVERGENCE==0 )
+      printf("  Warnung: Konvergenz wurde nicht erreicht.\n");
+    end;
 
-	add_to_history("p gf");
+    add_to_history("p gf");
 
-	printf("  Base spectra in uu(:,i), Kinetics in kineticfun(:,i)\n");
+    printf("  Base spectra in uu(:,i), Kinetics in kineticfun(:,i)\n");
 
-% TODO: Notiz rausschreiben, in welchen Variablen die Ergebnisse zu finden sind ( f�r direktes Plotten)
+  % TODO: Notiz rausschreiben, in welchen Variablen die Ergebnisse zu finden sind ( f�r direktes Plotten)
 
-%	break;
+  %	break;
 
 
 
@@ -3942,312 +3866,311 @@ case {"cut" }
 
 %%%%%%%%%%%%%%%%%%%%%%%             Beginn globalfit
   case {"globalfit" "gf" }
-	% Global-Fit der SVD-Daten
-	% Parameter: globalfit <nr komponenten> <keep|new|strict> <iterations>
-	%	strict: Die k's werden nicht variiert
-	% Vz,s = Cz,s*(1-exp(-k_i*t) + B0_s
+    % Global-Fit der SVD-Daten
+    % Parameter: globalfit <nr komponenten> <keep|new|strict> <iterations>
+    %	strict: Die k's werden nicht variiert
+    % Vz,s = Cz,s*(1-exp(-k_i*t) + B0_s
 
-	% TODO:
-	% Parameter strict einf�hren;
-	% wenn gesetzt, dann werden die k's nicht variiert.
-	%
-	% Fit erst mit auf 1 normierten V's zur K-Bestimmung, dann spaeter nochmal fitten mit korrekten Werten
-	% u_gf und v_gf einfhren, mdata=u_gf*v_gf
+    % TODO:
+    % Parameter strict einf�hren;
+    % wenn gesetzt, dann werden die k's nicht variiert.
+    %
+    % Fit erst mit auf 1 normierten V's zur K-Bestimmung, dann spaeter nochmal fitten mit korrekten Werten
+    % u_gf und v_gf einfhren, mdata=u_gf*v_gf
 
-	% globalfit recomp 	setzt neue Datenmatrix aus den Berechneten werten zusammen.
+    % globalfit recomp 	setzt neue Datenmatrix aus den Berechneten werten zusammen.
 
-	gf_METHOD="fminsearch";
-	gf_INITIAL_PARAMETERS="not saved";
-	gf_STDRESID="not saved";
-	gf_R2="not saved";
-	gf_KONVERGENCE="not saved";
+    gf_METHOD="fminsearch";
+    gf_INITIAL_PARAMETERS="not saved";
+    gf_STDRESID="not saved";
+    gf_R2="not saved";
+    gf_KONVERGENCE="not saved";
 
-	printf("  Warning -  this fitting function is outdated and slow\n");
-	printf("  It is used only for compatibility and verification and may be\n");
-	printf("  removed in future versions!\n");
+    printf("  Warning -  this fitting function is outdated and slow\n");
+    printf("  It is used only for compatibility and verification and may be\n");
+    printf("  removed in future versions!\n");
 
-  if ( eing_num > 1 )
-	components = str2num(substring(eingaben,2));	% Wieviel Komponenten einbeziehen?
+    if ( eing_num > 1 )
+    components = str2num(substring(eingaben,2));	% Wieviel Komponenten einbeziehen?
 
-	% Koeffizientenmatrix aufbauen (Startparameter)
-	C=rand(1, components*(components+2));
+    % Koeffizientenmatrix aufbauen (Startparameter)
+    C=rand(1, components*(components+2));
 
-	options = [0,gf_PRECISION];					%%  Möglicherweise ändern!!!!!!   TODO
+    options = [0,gf_PRECISION];					%%  Möglicherweise ändern!!!!!!   TODO
 
-	kineticfun=zeros(length(timevec),components);
+    kineticfun=zeros(length(timevec),components);
 
-	%%  				Funktionen zum Fitten, TODO: Wichtung mit R's^2R
-	%%				Zu fittende Komponenten bestimmen und wichten
-	%%
-	%%				TODO: WICHTIG: hier die gek�rzten v-Vektoren rein (siehe unten...)
-	%%
+    %%  				Funktionen zum Fitten, TODO: Wichtung mit R's^2R
+    %%				Zu fittende Komponenten bestimmen und wichten
+    %%
+    %%				TODO: WICHTIG: hier die gek�rzten v-Vektoren rein (siehe unten...)
+    %%
 
-	switch (laststep)
-	    case ROTATION
-		weights = zeros(1,components);
-		printf("  building matrix of weights...\n"); fflush(stdout);
-		if ( rows(s) < columns(vt_neu) )
-		    sadd = zeros( columns(vt_neu) - rows(s) , columns(vt_neu) );
-		    s=[s; sadd];
-		    printf("  warning: changed size of s-matrix!\n");
-		end;
-		wtmatrix = vt_neu'*(s(1:columns(vt_neu),1:columns(vt_neu)).^2)*vt_neu;		% TODO: s quadratisch machen
-		printf("  fertig\n"); fflush(stdout);
-		%v_w = wtmatrix * v_rot;
-		for i=1:components
-		    % diag(R'S^2R)
-		    %kineticfun(:,i)=v_rot(:,i)*wtmatrix(i,i);
-		    kineticfun(:,i)=v_rot(:,i);
-		    %kineticfun(:,i)=v_rot(:,i) / ( max(v_rot(:,i))-min(v_rot(:,i))  );
-		    weights(i) = wtmatrix(i,i);
-		    %weights(i) = 1;
-		    %kineticfun(:,i)=kineticfun(:,i)/(max(kineticfun(:,i))-min(kineticfun(:,i)));
-		end
-		printf ("  Using rotation data\n"); fflush(stdout);
-	    case SVD
-		weights = zeros(1,components);
-		for i=1:components
-		    kineticfun(:,i)=v(:,i);
-		    weights(i)=s(i,i)^2;			% Standardwichtung
-								% TODO: hier noch Wichtung mit e-Funktion rein...
-		    %weights(i)=1/(max(v(:,i))-min(v(:,i)));
-		    %kineticfun(:,i)=kineticfun(:,i)/(max(kineticfun(:,i))-min(kineticfun(:,i)));
-		end
-		printf ("  Using SVD data\n");
-	    otherwise
-		printf("  No SVD yet!\n");
-	end;
-
-
-	fig(FIG_GLOBALFIT);
-	clf();
-
-	bestfun = 1e10;
+    switch (laststep)
+        case ROTATION
+      weights = zeros(1,components);
+      printf("  building matrix of weights...\n"); fflush(stdout);
+      if ( rows(s) < columns(vt_neu) )
+          sadd = zeros( columns(vt_neu) - rows(s) , columns(vt_neu) );
+          s=[s; sadd];
+          printf("  warning: changed size of s-matrix!\n");
+      end;
+      wtmatrix = vt_neu'*(s(1:columns(vt_neu),1:columns(vt_neu)).^2)*vt_neu;		% TODO: s quadratisch machen
+      printf("  fertig\n"); fflush(stdout);
+      %v_w = wtmatrix * v_rot;
+      for i=1:components
+          % diag(R'S^2R)
+          %kineticfun(:,i)=v_rot(:,i)*wtmatrix(i,i);
+          kineticfun(:,i)=v_rot(:,i);
+          %kineticfun(:,i)=v_rot(:,i) / ( max(v_rot(:,i))-min(v_rot(:,i))  );
+          weights(i) = wtmatrix(i,i);
+          %weights(i) = 1;
+          %kineticfun(:,i)=kineticfun(:,i)/(max(kineticfun(:,i))-min(kineticfun(:,i)));
+      end
+      printf ("  Using rotation data\n"); fflush(stdout);
+        case SVD
+      weights = zeros(1,components);
+      for i=1:components
+          kineticfun(:,i)=v(:,i);
+          weights(i)=s(i,i)^2;			% Standardwichtung
+                  % TODO: hier noch Wichtung mit e-Funktion rein...
+          %weights(i)=1/(max(v(:,i))-min(v(:,i)));
+          %kineticfun(:,i)=kineticfun(:,i)/(max(kineticfun(:,i))-min(kineticfun(:,i)));
+      end
+      printf ("  Using SVD data\n");
+        otherwise
+      printf("  No SVD yet!\n");
+    end;
 
 
-%----------------------------------------------------------------------------------------------------------------------------------------
-	% Hier nur die K's variieren. Alle anderen Parameter bekommen immer Startwert 0!
-	num_parameters = components*(components+2);
-	k_start = components*components+1;
-	k_stop = components*components+components;
-	clear p_start; clear p_stop; clear ptest_kmatrix; clear ptest_matrix;
-	printf("   P�zision (gf_PRECISION): %f\n", gf_PRECISION);
-	printf("   Suchbereich: (gf_k_start|gf_k_stop)\n");
-	for i=1:components
-	  p_start(i) = gf_k_start(i);
-	  p_stop(i) = gf_k_stop(i);
-	  printf("      k%d: %f - %f\n", i, p_start(i), p_stop(i));
-	end
+    fig(FIG_GLOBALFIT);
+    clf();
 
-	printf("   Intervallanzahl (gf_ITERATIONS): %d\n", gf_ITERATIONS);
-
-	if gf_ITERATIONS==0
-		ptest_kmatrix = p_start;		% nur die Startwerte verwenden
-	else
-		ptest_kmatrix = pvariation(p_start, p_stop, gf_ITERATIONS);
-	end
-	prematrix=zeros(rows(ptest_kmatrix), k_start-1);
-	postmatrix=zeros(rows(ptest_kmatrix), num_parameters-k_stop);
+    bestfun = 1e10;
 
 
-	ptest_matrix=[prematrix, ptest_kmatrix, postmatrix];
+  %----------------------------------------------------------------------------------------------------------------------------------------
+    % Hier nur die K's variieren. Alle anderen Parameter bekommen immer Startwert 0!
+    num_parameters = components*(components+2);
+    k_start = components*components+1;
+    k_stop = components*components+components;
+    clear p_start; clear p_stop; clear ptest_kmatrix; clear ptest_matrix;
+    printf("   P�zision (gf_PRECISION): %f\n", gf_PRECISION);
+    printf("   Suchbereich: (gf_k_start|gf_k_stop)\n");
+    for i=1:components
+      p_start(i) = gf_k_start(i);
+      p_stop(i) = gf_k_stop(i);
+      printf("      k%d: %f - %f\n", i, p_start(i), p_stop(i));
+    end
 
-	printf("   Parametermatrix (%dx%d) erstellt.\n", columns(ptest_matrix),rows(ptest_matrix)); fflush(stdout);
+    printf("   Intervallanzahl (gf_ITERATIONS): %d\n", gf_ITERATIONS);
 
-	% TODO				Berechnung passiert nur mit dem tatsächlichen Bereich ok.
-	%					Immer mit gfit_expfun fitten; zum Fitten wird eine extra-Matrix erstellt
-	%					Vmatrix kuerzen und neuen timevec einf�hren (immer!)
-	%
-	%					vn=v(PRE_TIME_INDEX:end,:); mdata_neu=u*s*vn' ist dann ok
-	%
-	%
-	if ( PRE_TIME!=0 )
-	    PRE_INDEX = time_get_index(PRE_TIME, timevec);
-%	    model = @gfit_expfun_area;
-	    model = @gfit_expfun_area_m;		% Die Matrix - Version
-	    printf("  PRE_TIME definiert. Fit erfolgt an %f(%d)\n",PRE_TIME, PRE_INDEX);
-	else
-	    model=@gfit_expfun;
-	end;
-
-	% Zeitvektoren k�rzen, Fit nur im Reaktionsbereich
-	% TODO: Dies �berall ersetzten!
-	%_______________________________________________________________________________
-	kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
-	timevec_to_fit = timevec(REACTION_START_INDEX:end);
-	%_______________________________________________________________________________
-
-	globalfit_minfunc = @gfit_expfun_area_silent;		% TODO: model rausschmeissen
-
-	gf_counter = rows(ptest_matrix) / 10;
-	gf_idx = 0;
-	gf_percentage = 0;
-	printf("   Scan laeuft (%d Iterationen)\n", rows(ptest_matrix));
-	printf("   0..");
-
-	% Fit starten
-	    tic();
-	    zpb = waitbar(0, "Please Wait","createcancelbtn","close (zpb)");
-	    for i=1:rows(ptest_matrix)			% diese Schleife ist im Multicore Modus parallelisiert
-		    gf_idx++;
-		    if gf_idx>gf_counter
-		      gf_idx=0;
-		      gf_percentage+=10;
-		      printf("%d%% ",gf_percentage); fflush(stdout);
-		      textdummy=sprintf("%d%% abgeschlossen", gf_percentage);
-		      %zenity_progress(zpb_handle, gf_percentage, textdummy);
-          waitbar(gf_percentage/100, zpb, textdummy);
-		    end
-		    C = ptest_matrix(i,:);
-		    [fitparameter, fun] = fminsearch(model, C, options, 1, timevec_to_fit', kinetic_to_fit, components, weights);
-		    if ( fun < bestfun )					% TODO: Anpassen für PRE_TIME: richtig plotten!
-			    bestfun=fun;
-			    printf("*"); fflush(stdout);
-			    bestfit = fitparameter;
-			    subplot(2,1,1);
-			    [sse, fv] = model(fitparameter, timevec_to_fit', kinetic_to_fit, components,weights);
-			    if ( PRE_TIME != 0 )
-			        user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
-			        subplot(2,1,2);
-			        %diff_matrix = fv - kineticfun';
-			        diff_matrix = fv - kinetic_to_fit;
-			        user_plot(timevec_to_fit', diff_matrix);
-			        drawnow();
-			    else
-			        user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
-			        subplot(2,1,2);
-			        %diff_matrix = fv - kineticfun';
-			        diff_matrix = fv - kinetic_to_fit;
-			        user_plot(timevec_to_fit', diff_matrix);
-			        drawnow();
-			    end;
-		    end
-        close (zpb);
-	    end
-	    gf_time_consumed = toc();
-
-
-
-
-	printf(" Daten gescannt (%ds): vorlaeufiger Parametersatz\n", gf_time_consumed);
-	bestfit
-	% hier noch 1x mit dem besten Satz fitten
-	C = bestfit;
-	[fitparameter, fun] = fminsearch(model, C, options, 1, timevec_to_fit', kinetic_to_fit, components, weights);
-	% zenity_progress(zpb_handle, 100);
-  close(zpb);
-	printf("fertig.\n");		% TODO: hier weiter anpassen...
-	bestfit=fitparameter
-	bestfun=fun;
-		    % Ergebnis plotten
-	[sse, fv] = model(fitparameter, timevec_to_fit', kinetic_to_fit, components,weights);
-
-		    subplot(2,1,1);
-		    user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
-		    subplot(2,1,2);
-		    diff_matrix = fv - kinetic_to_fit;
-		    user_plot(timevec_to_fit', diff_matrix);
-		    drawnow();
-%----------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-	fitparameter = bestfit;
-
-	% Parameter r�ckrechnen auf A*(1-exp(-kx))+B
-	AMatrix=fitparameter(1:components*components);
-	AMatrix=reshape(AMatrix,components,components);
-	KMatrix=fitparameter(components*components+1: components*components+components);
-	OMatrix=fitparameter(components*(components+1)+1: (components*(components+1)+components));
-
-	printf("Globalfit abgeschlossen. Ergebnis:\n");
-	AMatrix				% Sollte die Transformationsmatrix sein
-	KMatrix
-	OMatrix
-
-	hold on;
-
-%	model=@gfit_expfun;
-%	[sse, fv] = model(fitparameter, timevec, kineticfun, components);
-
-%	diff_matrix = fv - kineticfun';		% gfit_expfun In Matrixschreibweise
-%	diff_matrix = fv - kineticfun;		% sonst
-
-	% neue Basisspektren berechnen		TODO: change this if rotated
-	% we need the new basis in uu, vv
-	switch (laststep)
-	    case SVD
-		u_r = u(:,1:components);
-		v_r = v(:,1:components);
-		s_r = s(1:components,1:components);
-		%sm = diag(repmat(1,components,1));	% Diagonalmatrix mit 1sen
-		uu = u_r*s_r*AMatrix;
-		vv=zeros(max(size(timevec_to_fit)),components);
-		for i=1:components
-		    vv(:,i) = (1-exp(-KMatrix(i)*timevec_to_fit));
-		end
-	    case ROTATION
-		uu = u_rot(:,1:components);
-		uu = uu*AMatrix;
-		vv=zeros(length(timevec_to_fit),components);				% TODO: verbessern
-		for i=1:components
-		    vv(:,i) = (1-exp(-KMatrix(i)*timevec_to_fit));			% FEHLER??????????????????
-		end
-	    otherwise
-		printf("  Fehler: SVD liegt nicht vor.\n");
-	end
-
-	printf("  B-Spektren: uu(:,i); Kinetiken: vv(:,i)  (i=1..%d)\n", components);
-	printf("  Hinweis: save globalfit speichert die Daten\n");				% MARK
-
-	printf("  Daten werden geplottet...\n");
-
-	% fig(FIG_GLOBALFIT_RESULT);
-	% clf();
-	%for i=1:components
-	%   subplot(components,2,(i-1)*2+1);
-	%    plot(freqvec,uu(:,i));
-	%   if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
-	%    subplot(components,2,(i-1)*2+2);
-	%   plot(timevec_to_fit',vv(:,i));						% size(vv(:,1)) = 0??????  TODO: Change this to plot data and fit
-	%   % user_plot(timevec,kineticfun(:,i), timevec, fv(:,i));		% Hier nicht nötig, weil das ja schon in einem anderen Fenster ist.
-	%end;
-	add_to_history("p gf");
+    if gf_ITERATIONS==0
+      ptest_kmatrix = p_start;		% nur die Startwerte verwenden
     else
-				% Menügesteuerte Abfrage
-	printf("  globalfit: keine Parameter angegeben.\n  Interaktive Abfrage erfolgt\n");
-	clear cmpnts;
-	cmpnts = str2num(inputdlg("Wieviel Komponenten?"){1});
-	no_search_area = message("Bereich absuchen?","question");
-	for i=1:cmpnts
-		dummy=sprintf("%f",gf_k_start(i));
-		dummy2=sprintf("Startwert Nr. %d",i);
-		gf_k_start(i) = str2num(inputdlg(dummy2, dummy, 1, {dummy}){1});
-		dummy3=sprintf("gf_k_start(%d)=%f;",i,gf_k_start(i));
-		add_to_history(dummy3);
-		if (no_search_area==0)
-		    dummy=sprintf("%f",gf_k_stop(i));
-		    dummy2=sprintf("Endwert Nr. %d",i);
-		    gf_k_stop(i) = str2num(inputdlg(dummy2, dummy, 1, {dummy}){1});
-		    dummy3=sprintf("gf_k_stop(%d)=%f;",i,gf_k_stop(i));
-		    add_to_history(dummy3);
-		end;
-	end;
-	if (no_search_area==1)
-		gf_ITERATIONS=0;
-	else
-		dummy=sprintf("%d", gf_ITERATIONS);
-		gf_ITERATIONS = str2num(inputdlg("Suchtiefe",dummy,1,{dummy}){1});
-	end;
-	dummy3=sprintf("gf_ITERATIONS=%d;", gf_ITERATIONS);
-	add_to_history(dummy3);
-	dummy=sprintf("globalfit %d", cmpnts);
-	add_to_history(dummy);
-    end;			% if (eing_num>1)
-    % add_to_history("p gf");						% Waehre hier rekursiv!?
+      ptest_kmatrix = pvariation(p_start, p_stop, gf_ITERATIONS);
+    end
+    prematrix=zeros(rows(ptest_kmatrix), k_start-1);
+    postmatrix=zeros(rows(ptest_kmatrix), num_parameters-k_stop);
 
-%%%%%%%%%%%%%%                                            End Globalfit
+
+    ptest_matrix=[prematrix, ptest_kmatrix, postmatrix];
+
+    printf("   Parametermatrix (%dx%d) erstellt.\n", columns(ptest_matrix),rows(ptest_matrix)); fflush(stdout);
+
+    % TODO				Berechnung passiert nur mit dem tatsächlichen Bereich ok.
+    %					Immer mit gfit_expfun fitten; zum Fitten wird eine extra-Matrix erstellt
+    %					Vmatrix kuerzen und neuen timevec einf�hren (immer!)
+    %
+    %					vn=v(PRE_TIME_INDEX:end,:); mdata_neu=u*s*vn' ist dann ok
+    %
+    %
+    if ( PRE_TIME!=0 )
+        PRE_INDEX = time_get_index(PRE_TIME, timevec);
+        model = @gfit_expfun_area_m;		% Die Matrix - Version
+        printf("  PRE_TIME definiert. Fit erfolgt an %f(%d)\n",PRE_TIME, PRE_INDEX);
+    else
+        model=@gfit_expfun;
+    end;
+
+    % Zeitvektoren k�rzen, Fit nur im Reaktionsbereich
+    % TODO: Dies �berall ersetzten!
+    %_______________________________________________________________________________
+    kinetic_to_fit = kineticfun(REACTION_START_INDEX:end,:);
+    timevec_to_fit = timevec(REACTION_START_INDEX:end);
+    %_______________________________________________________________________________
+
+    globalfit_minfunc = @gfit_expfun_area_silent;		% TODO: model rausschmeissen
+
+    gf_counter = rows(ptest_matrix) / 10;
+    gf_idx = 0;
+    gf_percentage = 0;
+    printf("   Scan laeuft (%d Iterationen)\n", rows(ptest_matrix));
+    printf("   0..");
+
+    % Fit starten
+        tic();
+        zpb = waitbar(0, "Please Wait","createcancelbtn","close (zpb)");
+        for i=1:rows(ptest_matrix)			% diese Schleife ist im Multicore Modus parallelisiert
+          gf_idx++;
+          if gf_idx>gf_counter
+            gf_idx=0;
+            gf_percentage+=10;
+            printf("%d%% ",gf_percentage); fflush(stdout);
+            textdummy=sprintf("%d%% abgeschlossen", gf_percentage);
+            %zenity_progress(zpb_handle, gf_percentage, textdummy);
+            waitbar(gf_percentage/100, zpb, textdummy);
+          end
+          C = ptest_matrix(i,:);
+          [fitparameter, fun] = fminsearch(model, C, options, 1, timevec_to_fit', kinetic_to_fit, components, weights);
+          if ( fun < bestfun )					% TODO: Anpassen für PRE_TIME: richtig plotten!
+            bestfun=fun;
+            printf("*"); fflush(stdout);
+            bestfit = fitparameter;
+            subplot(2,1,1);
+            [sse, fv] = model(fitparameter, timevec_to_fit', kinetic_to_fit, components,weights);
+            if ( PRE_TIME != 0 )
+                user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
+                subplot(2,1,2);
+                %diff_matrix = fv - kineticfun';
+                diff_matrix = fv - kinetic_to_fit;
+                user_plot(timevec_to_fit', diff_matrix);
+                drawnow();
+            else
+                user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
+                subplot(2,1,2);
+                %diff_matrix = fv - kineticfun';
+                diff_matrix = fv - kinetic_to_fit;
+                user_plot(timevec_to_fit', diff_matrix);
+                drawnow();
+            end;
+          end
+          close (zpb);
+        end
+        gf_time_consumed = toc();
+
+
+
+
+    printf(" Daten gescannt (%ds): vorlaeufiger Parametersatz\n", gf_time_consumed);
+    bestfit
+    % hier noch 1x mit dem besten Satz fitten
+    C = bestfit;
+    [fitparameter, fun] = fminsearch(model, C, options, 1, timevec_to_fit', kinetic_to_fit, components, weights);
+    % zenity_progress(zpb_handle, 100);
+    close(zpb);
+    printf("fertig.\n");		% TODO: hier weiter anpassen...
+    bestfit=fitparameter
+    bestfun=fun;
+          % Ergebnis plotten
+    [sse, fv] = model(fitparameter, timevec_to_fit', kinetic_to_fit, components,weights);
+
+          subplot(2,1,1);
+          user_plot(timevec_to_fit,kinetic_to_fit, timevec_to_fit', fv);
+          subplot(2,1,2);
+          diff_matrix = fv - kinetic_to_fit;
+          user_plot(timevec_to_fit', diff_matrix);
+          drawnow();
+    %----------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+    fitparameter = bestfit;
+
+    % Parameter r�ckrechnen auf A*(1-exp(-kx))+B
+    AMatrix=fitparameter(1:components*components);
+    AMatrix=reshape(AMatrix,components,components);
+    KMatrix=fitparameter(components*components+1: components*components+components);
+    OMatrix=fitparameter(components*(components+1)+1: (components*(components+1)+components));
+
+    printf("Globalfit abgeschlossen. Ergebnis:\n");
+    AMatrix				% Sollte die Transformationsmatrix sein
+    KMatrix
+    OMatrix
+
+    hold on;
+
+    %	model=@gfit_expfun;
+    %	[sse, fv] = model(fitparameter, timevec, kineticfun, components);
+
+    %	diff_matrix = fv - kineticfun';		% gfit_expfun In Matrixschreibweise
+    %	diff_matrix = fv - kineticfun;		% sonst
+
+    % neue Basisspektren berechnen		TODO: change this if rotated
+    % we need the new basis in uu, vv
+    switch (laststep)
+        case SVD
+      u_r = u(:,1:components);
+      v_r = v(:,1:components);
+      s_r = s(1:components,1:components);
+      %sm = diag(repmat(1,components,1));	% Diagonalmatrix mit 1sen
+      uu = u_r*s_r*AMatrix;
+      vv=zeros(max(size(timevec_to_fit)),components);
+      for i=1:components
+          vv(:,i) = (1-exp(-KMatrix(i)*timevec_to_fit));
+      end
+        case ROTATION
+      uu = u_rot(:,1:components);
+      uu = uu*AMatrix;
+      vv=zeros(length(timevec_to_fit),components);				% TODO: verbessern
+      for i=1:components
+          vv(:,i) = (1-exp(-KMatrix(i)*timevec_to_fit));			% FEHLER??????????????????
+      end
+        otherwise
+      printf("  Fehler: SVD liegt nicht vor.\n");
+    end
+
+    printf("  B-Spektren: uu(:,i); Kinetiken: vv(:,i)  (i=1..%d)\n", components);
+    printf("  Hinweis: save globalfit speichert die Daten\n");				% MARK
+
+    printf("  Daten werden geplottet...\n");
+
+    % fig(FIG_GLOBALFIT_RESULT);
+    % clf();
+    %for i=1:components
+    %   subplot(components,2,(i-1)*2+1);
+    %    plot(freqvec,uu(:,i));
+    %   if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
+    %    subplot(components,2,(i-1)*2+2);
+    %   plot(timevec_to_fit',vv(:,i));						% size(vv(:,1)) = 0??????  TODO: Change this to plot data and fit
+    %   % user_plot(timevec,kineticfun(:,i), timevec, fv(:,i));		% Hier nicht nötig, weil das ja schon in einem anderen Fenster ist.
+    %end;
+    add_to_history("p gf");
+      else
+          % Menügesteuerte Abfrage
+    printf("  globalfit: keine Parameter angegeben.\n  Interaktive Abfrage erfolgt\n");
+    clear cmpnts;
+    cmpnts = str2num(inputdlg("Wieviel Komponenten?"){1});
+    no_search_area = message("Bereich absuchen?","question");
+    for i=1:cmpnts
+      dummy=sprintf("%f",gf_k_start(i));
+      dummy2=sprintf("Startwert Nr. %d",i);
+      gf_k_start(i) = str2num(inputdlg(dummy2, dummy, 1, {dummy}){1});
+      dummy3=sprintf("gf_k_start(%d)=%f;",i,gf_k_start(i));
+      add_to_history(dummy3);
+      if (no_search_area==0)
+          dummy=sprintf("%f",gf_k_stop(i));
+          dummy2=sprintf("Endwert Nr. %d",i);
+          gf_k_stop(i) = str2num(inputdlg(dummy2, dummy, 1, {dummy}){1});
+          dummy3=sprintf("gf_k_stop(%d)=%f;",i,gf_k_stop(i));
+          add_to_history(dummy3);
+      end;
+    end;
+    if (no_search_area==1)
+      gf_ITERATIONS=0;
+    else
+      dummy=sprintf("%d", gf_ITERATIONS);
+      gf_ITERATIONS = str2num(inputdlg("Suchtiefe",dummy,1,{dummy}){1});
+    end;
+    dummy3=sprintf("gf_ITERATIONS=%d;", gf_ITERATIONS);
+    add_to_history(dummy3);
+    dummy=sprintf("globalfit %d", cmpnts);
+    add_to_history(dummy);
+      end;			% if (eing_num>1)
+      % add_to_history("p gf");						% Waehre hier rekursiv!?
+
+  %%%%%%%%%%%%%%                                            End Globalfit
 
   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
   %%								Rotation der V-Matrix (v(:,i)) zur S/R Trennung
@@ -4259,11 +4182,10 @@ case {"cut" }
 	    printf("  Syntax: rotation a b c d .... o n | rotation a - b o n\n");
 	    printf("  Beispiel: rotation 1 2 4 8 o 3 rotiert die Vektoren 1,2,4,8 in der Ordnung 3\n");
     else
-	    printf("Rotiere V\n");
-	    %zpb_handle = zenity_progress("Rotation - Bitte warten...","auto-close","pulsate");
-	    %zenity_progress(zpb_handle,30);
+	    printf("Rotate V\n");
+
 	    u_mode = 0;
-    	if ( strcmp( substring(eingaben, eing_num-1),"o") )			# ROTATION_ORDER �ndern
+    	if ( strcmp( substring(eingaben, eing_num-1),"o") )			# Set rotation order
 		    ROTATION_ORDER = str2num(substring(eingaben,eing_num));
 		    printf("  Warnung: ROTATION_ORDER=%d permanent gesetzt\n", ROTATION_ORDER);
 		    rotation_vectors_num = eing_num - 3;
@@ -4288,29 +4210,26 @@ case {"cut" }
 	      else
 		      rotation_vector(i) = str2num( substring(eingaben, i+1) );
 	      end
-%	          printf ("  Hinzugefügt wird %d\n", rotation_vector(i));
 	      rotation_matrix(:,i) = v(:,rotation_vector(i));
 	    end
-	    % Rotationsmatrix ausrechnen
+	    % Calculate Rotation matrix
 	    printf("  Rotation wird für %d Komponenten ausgefuehrt...\n",i); fflush(stdout);
-	    %[ tv, ew ] = rotator1(rotation_matrix);
+
 	    [ tv, ew ] = rotate_matrix(rotation_matrix, ROTATION_ORDER);
-	    % wichten und
-	    % In Identitätsmatrix einbetten
+	    % embed weights in identity matrix
 	    vt_neu = eye(columns(v));
-    	% TODO: �berpr�fen!!
+
     	for zeile=1:rotation_vectors_num
 	        for spalte=1:rotation_vectors_num
 		        vt_neu(rotation_vector(zeile),rotation_vector(spalte)) = tv(zeile, spalte);
 	        end
 	    end
+
       %v transformieren:
-	    %u_bak=u;%v_bak=v;%s_bak=s;
-    	% TODO:		geht das so, wenn über U rotiert wird?
 	    v_rot=v*vt_neu;
 	    u_rot=u*s*vt_neu;
 	    u_alt=u*s;
-	    % u_neu=u*vt_neu;
+
 	    % Wichtungsmatrix für die Fits Konstruieren
 	    % analog bei SVD
 	    % wtmatrix = vt_neu'*(s^2)*vt_neu;
@@ -4322,9 +4241,9 @@ case {"cut" }
 	    printf("    save exp rotation_kinetics2.dat timevec v_rot(:,2)		... z.B. 2. Komponente der Rotation speichern\n");
 	    laststep = ROTATION;
 	    is_rotation = 1;
-	    %zenity_progress(zpb_handle,100);
     end
-  %%												Komponenten vertauschen
+
+
   case {"u_rotation" }
     if ( eing_num == 1 )
 	    printf("  Syntax: u_rotation a b c d .... [u] | urotation a - b\n");
@@ -4381,83 +4300,83 @@ case {"cut" }
   %%												Komponenten vertauschen
   case {"rotswap" }
     if ( eing_num == 3 )
-	k1 = str2num( substring(eingaben,2) );
-	k2 = str2num( substring(eingaben,3) );
-	bu=u_rot(:,k1);		%U
-	u_rot(:,k1)=u_rot(:,k2);
-	u_rot(:,k2)=bu;
-	bv=v_rot(:,k1);		%V
-	v_rot(:,k1) = v_rot(:,k2);
-	v_rot(:,k2) = bv;
+      k1 = str2num( substring(eingaben,2) );
+      k2 = str2num( substring(eingaben,3) );
+      bu=u_rot(:,k1);		%U
+      u_rot(:,k1)=u_rot(:,k2);
+      u_rot(:,k2)=bu;
+      bv=v_rot(:,k1);		%V
+      v_rot(:,k1) = v_rot(:,k2);
+      v_rot(:,k2) = bv;
     else
-	printf("  rotswap a b - 2 Komponenten vertauschen\n");
+	    printf("  rotswap a b - 2 Komponenten vertauschen\n");
     end;
   %%                                                                                            Komponenten löschen (noise)
   case {"rotkill" }
     if ( eing_num==2 )
-	val=str2num( substring(eingaben,2) );
-	u_rot(:,val:end) = zeros(rows(u_rot),columns(u_rot)-val+1);
-	v_rot(:,val:end) = zeros(rows(v_rot),columns(v_rot)-val+1);
+      val=str2num( substring(eingaben,2) );
+      u_rot(:,val:end) = zeros(rows(u_rot),columns(u_rot)-val+1);
+      v_rot(:,val:end) = zeros(rows(v_rot),columns(v_rot)-val+1);
     else
-	printf("  rotkill nr - Komponenten ab nr loeschen\n");
+	    printf("  rotkill nr - Komponenten ab nr loeschen\n");
     end
   case {"recomp" }					% auch für reine SVD
     put();
     switch (laststep)
-	case ROTATION
-	    printf("Verwende Daten der Rotation\n");
-	    mdata = u_rot*v_rot';
-	case SVD
-	    mdata = u*s*v';
-	    printf("Verwende Daten der SVD\n");
+      case ROTATION
+          printf("Verwende Daten der Rotation\n");
+          mdata = u_rot*v_rot';
+      case SVD
+          mdata = u*s*v';
+          printf("Verwende Daten der SVD\n");
     end
 
   case {"ffit"}			% Fit über fminsearch
     if (eing_num>2)
-	if ( strcmp(substring(eingaben,2),"exp") )
-	    F = @exp_fit;
-	    pin = [1, 1, 1];			%
-	    pin(1)=max(mdata(1,:));
-	    pin(2)=1/timevec(length(timevec));
-	    pin(3)=min(mdata(1,:));
-	    options = [0, 1e-8];
+      if ( strcmp(substring(eingaben,2),"exp") )
+          F = @exp_fit;
+          pin = [1, 1, 1];			%
+          pin(1)=max(mdata(1,:));
+          pin(2)=1/timevec(length(timevec));
+          pin(3)=min(mdata(1,:));
+          options = [0, 1e-8];
 
-	    for i=1:length(freqvec)
-		[ fitpar, fitfun ] = fminsearch(F, pin, options, 1, timevec, mdata(i,:));
-		pin=fitpar;
-		if (LIVE_MODE)
-		    fig(FIG_LIVE);
-		    plot( timevec, mdata(i,:), timevec, (fitpar(1)*(1-exp(-fitpar(2)*timevec)))+fitpar(3));
-		    drawnow();
-		end;
-	    end;
-	elseif ( strcmp(substring(eingaben,2),"2exp") )
-	    F = @twoexp_fit;
-	    pin = [1, 1, 1, 1, 1];
-	    % Sinnvolle Wahl der Startparameter:
-	    pin(1) = max( mdata(1,:) );
-	    pin(2) = 1/timevec(length(timevec));		% initial guess: change
-	    pin(3) = min( mdata(1,:) );
-	    pin(4) = 5/timevec(length(timevec));
-	    pin(5) = mdata(1,length(timevec));
-	    options = [0, 1e-6];
+          for i=1:length(freqvec)
+            [ fitpar, fitfun ] = fminsearch(F, pin, options, 1, timevec, mdata(i,:));
+            pin=fitpar;
+            if (LIVE_MODE)
+                fig(FIG_LIVE);
+                plot( timevec, mdata(i,:), timevec, (fitpar(1)*(1-exp(-fitpar(2)*timevec)))+fitpar(3));
+                drawnow();
+            end;
+          end;
+      elseif ( strcmp(substring(eingaben,2),"2exp") )
+          F = @twoexp_fit;
+          pin = [1, 1, 1, 1, 1];
+          % Sinnvolle Wahl der Startparameter:
+          pin(1) = max( mdata(1,:) );
+          pin(2) = 1/timevec(length(timevec));		% initial guess: change
+          pin(3) = min( mdata(1,:) );
+          pin(4) = 5/timevec(length(timevec));
+          pin(5) = mdata(1,length(timevec));
+          options = [0, 1e-6];
 
-	    for i=1:length(freqvec)
-		[ fitpar, fitfun ] = fminsearch(F, pin, options, 1, timevec, mdata(i,:));
-		ffit_data(i,:)=(fitpar(1)*(1-exp(-fitpar(2)*timevec))+fitpar(3)*(1-exp(-fitpar(4)*timevec))+fitpar(5));
-		if (LIVE_MODE)
-		    fig(FIG_LIVE);
-		    plot( timevec, mdata(i,:), timevec, ffit_data(i,:));
-		    drawnow();
-		end;
-		parameters{i}=fitpar;
+          for i=1:length(freqvec)
+            [ fitpar, fitfun ] = fminsearch(F, pin, options, 1, timevec, mdata(i,:));
+            ffit_data(i,:)=(fitpar(1)*(1-exp(-fitpar(2)*timevec))+fitpar(3)*(1-exp(-fitpar(4)*timevec))+fitpar(5));
+            if (LIVE_MODE)
+                fig(FIG_LIVE);
+                plot( timevec, mdata(i,:), timevec, ffit_data(i,:));
+                drawnow();
+            end;
+            parameters{i}=fitpar;
+          end;
+	        printf("  Fit abgeschlossen\n");
+	    else
+	      printf("  Unbekannte Funktion\n");
 	    end;
-	    printf("  Fit abgeschlossen\n");
-	else
-	    printf("  Unbekannte Funktion\n");
-	end;
     else
-	printf("  ? ffit für mehr Information\n");
+	    printf("  ? ffit für mehr Information\n");
     end;
 
 
@@ -4466,50 +4385,50 @@ case {"cut" }
 							% JEDER FIT WIRD FIT_ITERATIONS x durchgeführt,die Beste Variante
     if (eing_num > 2)
       if ( strcmp(substring(eingaben,2),"exp") )
-	    F = @fit_monoexponential;			# Die Funktion
-	    pin = [1.0,1.0,1.0];
-	    fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  Monoexponentieller Fit");
+        F = @fit_monoexponential;			# Die Funktion
+        pin = [1.0,1.0,1.0];
+        fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  Monoexponentieller Fit");
       elseif ( strcmp(substring(eingaben,2),"expdx") )
-	    F = @fit_monoexponential_dx;			# Die Funktion
-	    pin = [0.0,1.0,1.0,-0.00001,38.0];
-	    fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*(x-p(4))))";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  Exponentieller Fit mit dx");
+        F = @fit_monoexponential_dx;			# Die Funktion
+        pin = [0.0,1.0,1.0,-0.00001,38.0];
+        fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*(x-p(4))))";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  Exponentieller Fit mit dx");
       elseif ( strcmp(substring(eingaben,2),"linexp") )
-	    F = @fit_lin_exponential;			# Die Funktion
-	    pin = [0.0,1.0,1.0,0];
-	    fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))+p(4)*x";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  Linear-exponentieller Fit");
+        F = @fit_lin_exponential;			# Die Funktion
+        pin = [0.0,1.0,1.0,0];
+        fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))+p(4)*x";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  Linear-exponentieller Fit");
       elseif ( strcmp(substring(eingaben,2),"lin") )
-	    F = @fit_lin;			# Die Funktion
-	    pin = [0.0,1.0];
-	    fit_info = "y=p(1)+p(2)*x";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  Linearer Fit");
+        F = @fit_lin;			# Die Funktion
+        pin = [0.0,1.0];
+        fit_info = "y=p(1)+p(2)*x";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  Linearer Fit");
       elseif ( strcmp(substring(eingaben,2),"2exp") )
-	    F = @fit_2exp;			# Die Funktion
-	    pin = [-0.4, 0.4, 25, 0.4, 3.5];
-	    fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))+p(4)*(1-exp(-p(5)*x))";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  2Phasig exponentieller Fit");
+        F = @fit_2exp;			# Die Funktion
+        pin = [-0.4, 0.4, 25, 0.4, 3.5];
+        fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))+p(4)*(1-exp(-p(5)*x))";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  2Phasig exponentieller Fit");
       elseif ( strcmp(substring(eingaben,2),"3exp") )
-	    F = @fit_3exp;			# Die Funktion
-%	    pin = [-0.4, 0.4, 25, 0.4, 3.5];
-	    fit_info = "y = p(1) + p(2)*(1-exp(-p(3)*x)) + p(4)*(1-exp(-p(5)*x)) + p(6)*(1-exp(-p(7)*x));";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  3Phasig exponentieller Fit");
+        F = @fit_3exp;			# Die Funktion
+  %	    pin = [-0.4, 0.4, 25, 0.4, 3.5];
+        fit_info = "y = p(1) + p(2)*(1-exp(-p(3)*x)) + p(4)*(1-exp(-p(5)*x)) + p(6)*(1-exp(-p(7)*x));";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  3Phasig exponentieller Fit");
       elseif ( strcmp(substring(eingaben,2),"henderson") )
-	    F = @fit_hendersonhasselbalch3;			# Die Funktion
-	    pin = [6.0, 0.001, 1];
-	    fit_info = "y = p(3).*(p(2)+10.^(p(1)-x))./(1+10.^(p(1)-x))";	# Startparameter (noch automatisch zuweisen!!)
-	    printf("  Henderson Hasselbakch");
+        F = @fit_hendersonhasselbalch3;			# Die Funktion
+        pin = [6.0, 0.001, 1];
+        fit_info = "y = p(3).*(p(2)+10.^(p(1)-x))./(1+10.^(p(1)-x))";	# Startparameter (noch automatisch zuweisen!!)
+        printf("  Henderson Hasselbakch");
       else
-    	    printf("  Warnung: Fitfunktion nicht bekannt, nehme Exponentialfunktion an\n");
-	    F = @fit_monoexponential;		# Die Funktion
-	    fit_info = "p(1)+p(2)*(1-exp(-p(3)*x))";
-	    pin = [0.0,1.0,1.0];			# Startparameter (noch automatisch zuweisen!!)
+        printf("  Warnung: Fitfunktion nicht bekannt, nehme Exponentialfunktion an\n");
+        F = @fit_monoexponential;		# Die Funktion
+        fit_info = "p(1)+p(2)*(1-exp(-p(3)*x))";
+        pin = [0.0,1.0,1.0];			# Startparameter (noch automatisch zuweisen!!)
       endif;
 
-        if (strcmp(substring(eingaben,3), "file") )
-		printf("  Leider noch nicht verf�gbar\n");
-		apropos("fit");
+      if (strcmp(substring(eingaben,3), "file") )
+		  printf("  Leider noch nicht verf�gbar\n");
+		  apropos("fit");
 	elseif (strcmp(substring(eingaben,3), "all") )			% Alle Kurven Fitten - Automatik
 		traces_to_go = length(freqvec);
 		fit_startindex = get_index(0, timevec);
@@ -4555,19 +4474,19 @@ case {"cut" }
 		plot(timevec,mdata(fit_trace_to_go,:), fit_x, f_f);		% MARK
 		printf("  Fit abgeschlossen. Fitparameter in f_p. Details s. fit_info.\n");
 	else
-	    if ( strcmp(substring(eingaben,2),"init"))
-		printf("Startparameter anpassen\n");
-		% TODO: interaktives Auswählen der Startparameter.
+	  if ( strcmp(substring(eingaben,2),"init"))
+      printf("Startparameter anpassen\n");
+      % TODO: interaktives Auswählen der Startparameter.
 
-	    else
-		printf("starting\n");
-        	traces_to_go = eing_num - 2;
-		for i=1:traces_to_go
-		    wz_to_fit(i) = str2num(substring(eingaben, 2+i));
-		    [ index_to_fit(i), real_index ] = ir_get_index(wz_to_fit(i), freqvec);
-		    printf("ok\n");
-		endfor;
-	    endif;
+	  else
+		  printf("starting\n");
+     	traces_to_go = eing_num - 2;
+      for i=1:traces_to_go
+          wz_to_fit(i) = str2num(substring(eingaben, 2+i));
+          [ index_to_fit(i), real_index ] = ir_get_index(wz_to_fit(i), freqvec);
+          printf("ok\n");
+      endfor;
+	  endif;
 	endif;
 
     else
@@ -5561,68 +5480,68 @@ case {"cut" }
 	    printf("  Info: \" plot r\" zum Plotten nur der rotierten Matrix verwenden!\n");
 	    fig(FIG_SVD);
 	    clf();
-	    if ( eing_num == 3 ) 
-			vals_to_plot = str2num(substring(eingaben,3)); 
-		else
-			vals_to_plot = 5;
-		endif;
+	    if ( eing_num == 3 )
+			  vals_to_plot = str2num(substring(eingaben,3));
+      else
+        vals_to_plot = 5;
+      endif;
 	    printf("  vals_to_plot=%d\n", vals_to_plot);
 	    for komponente=1:vals_to_plot
-			subplot(vals_to_plot,2,komponente*2-1);
-			plot(freqvec, u_alt(:,komponente), freqvec, u_rot(:,komponente));
-			legend('original','rotated');
-			subplot(vals_to_plot,2,komponente*2);
-			if ( LOG_KINETICS==0)
-				plot(timevec, v(:,komponente), timevec, v_rot(:,komponente));
-			else
-				semilogx(timevec, v(:,komponente), timevec, v_rot(:,komponente));
-			endif;
-			legend('original','rotated');
+        subplot(vals_to_plot,2,komponente*2-1);
+        plot(freqvec, u_alt(:,komponente), freqvec, u_rot(:,komponente));
+        legend('original','rotated');
+        subplot(vals_to_plot,2,komponente*2);
+        if ( LOG_KINETICS==0)
+          plot(timevec, v(:,komponente), timevec, v_rot(:,komponente));
+        else
+          semilogx(timevec, v(:,komponente), timevec, v_rot(:,komponente));
+        endif;
+        legend('original','rotated');
 	    end
 	    % Baustelle: wenn grace eingestellt ist, hier kurzzeitig auf gnuplot umstellen!
 	    if (PLOT_ROT_HISTOGRAMS==1)
-			if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
-			fig(FIG_AUTOCORR);
-			clf();
-			subplot (2,2,1);
-			plotvec=zeros(1,vals_to_plot);
-			for i=1:autocorr_to_plot
-				plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
-			endfor;
-			bar (plotvec');
-			title("Autocorrelation of U (orig)");
-			xlabel('component number');
-			ylabel('value');
-			subplot (2,2,2);
-			plotvec=zeros(1,vals_to_plot);
-			for i=1:autocorr_to_plot
-				plotvec(i,:) = svd_autocorr(u_rot, vals_to_plot, i);
-			endfor;
-			bar (plotvec');
-			title("Autocorrelation of U (rot)");
-			xlabel('component number');
-			ylabel('value');
-			subplot (2,2,3);
-			plotvec=zeros(1,vals_to_plot);
-			for i=1:autocorr_to_plot
-				plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
-			endfor;
-			bar (plotvec');
-			title("Autocorrelation of V (orig)");
-			xlabel('component number');
-			ylabel('value');
-			subplot (2,2,4);
-			plotvec=zeros(1,vals_to_plot);
-			for i=1:autocorr_to_plot
-				plotvec(i,:) = svd_autocorr(v_rot, vals_to_plot,i );
-			endfor;
-			bar (plotvec');
-			title("Autocorrelation of V (rot)");
-			xlabel('component number');
-			ylabel('value');
-			if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
+        if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
+        fig(FIG_AUTOCORR);
+        clf();
+        subplot (2,2,1);
+        plotvec=zeros(1,vals_to_plot);
+        for i=1:autocorr_to_plot
+          plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
+        endfor;
+        bar (plotvec');
+        title("Autocorrelation of U (orig)");
+        xlabel('component number');
+        ylabel('value');
+        subplot (2,2,2);
+        plotvec=zeros(1,vals_to_plot);
+        for i=1:autocorr_to_plot
+          plotvec(i,:) = svd_autocorr(u_rot, vals_to_plot, i);
+        endfor;
+        bar (plotvec');
+        title("Autocorrelation of U (rot)");
+        xlabel('component number');
+        ylabel('value');
+        subplot (2,2,3);
+        plotvec=zeros(1,vals_to_plot);
+        for i=1:autocorr_to_plot
+          plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
+        endfor;
+        bar (plotvec');
+        title("Autocorrelation of V (orig)");
+        xlabel('component number');
+        ylabel('value');
+        subplot (2,2,4);
+        plotvec=zeros(1,vals_to_plot);
+        for i=1:autocorr_to_plot
+          plotvec(i,:) = svd_autocorr(v_rot, vals_to_plot,i );
+        endfor;
+        bar (plotvec');
+        title("Autocorrelation of V (rot)");
+        xlabel('component number');
+        ylabel('value');
+        if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
 	    else
-			printf("  Hinweis: Histogrammansicht kann mit PLOT_ROT_HISTOGRAMS=1 eingeschaltet werden.\n");
+			  printf("  Hinweis: Histogrammansicht kann mit PLOT_ROT_HISTOGRAMS=1 eingeschaltet werden.\n");
 	    end;
 	    printf("  Bearbeitete Daten in u_rot, v_rot ( mdata = u_rot (v_rot)T )\n");
 
@@ -5781,7 +5700,7 @@ case {"cut" }
 				if (!REACTION_START_INDEX)
 					REACTION_START_INDEX = 1;
 				endif;
-				if length(timevec)>x_resolution
+				if length(timevec)>x_resolution && length(timevec)>1+x_avg
 					i=1; j=1;k=0;l=1;							% Kinetiken reduzieren
 					printf("  Skaliert Kinetik...\n"); fflush(stdout);
 					if(j+x_avg<REACTION_START_INDEX)
@@ -5819,7 +5738,7 @@ case {"cut" }
 				endif;
 			else
 				%scaling for linear plot
-				if length(timevec)>x_resolution
+				if length(timevec)>x_resolution && length(timevec)>1+x_avg
 					i=1; j=1;							% Kinetiken reduzieren
 					printf("  Skaliert Kinetik...\n"); fflush(stdout);
 					do
@@ -5831,11 +5750,11 @@ case {"cut" }
 				else
 					plot_kin=timevec;
 					plot_dat_1=mdata;
-					printf("Maximale Auflösung der Kinetik\n");
+					printf("  Maximale Auflösung der Kinetik\n");
 				endif;
 			endif;
 			%scale frequency for plot
-			if length(freqvec)>y_resolution
+			if length(freqvec)>y_resolution && length(freqvec)>1+y_avg
 				i=1; j=1;
 				printf("  Skaliert Spektren...\n"); fflush(stdout);		% WZ reduzieren (hier besser peak pick)
 				do
@@ -5847,7 +5766,7 @@ case {"cut" }
 			else
 				plot_wzv=freqvec;
 				plot_dat=plot_dat_1;
-				printf("Maximale Spektrale auflösung\n");
+				printf("  Maximale Spektrale auflösung\n");
 			endif;
 
 			printf(" Change view: AZ_3D, EL_3D\n");
@@ -5856,10 +5775,10 @@ case {"cut" }
 			if (AUTO_FIGURE==1), fig(FIG_SURFACE); endif;
 
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% contour plotting option e.g. for uvvis data    Paul Fischer
-			if (eing_num == 3 && sum(strcmp(substring(eingaben, 3), {"cont","contour"})))    
-				plot3d=@surf;
-				plot3d(plot_kin, plot_wzv, plot_dat);				% mesh oder surface
-				view(90,90);
+			if (eing_num == 3 && sum(strcmp(substring(eingaben, 3), {"cont","contour"})))
+				%plot3d=@surf;
+				pcolor (plot_kin, plot_wzv, plot_dat);				% mesh oder surface
+				%view(90,90);
 				shading interp;
 				colormap(jet);
 			%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% mesh plot
@@ -6114,7 +6033,7 @@ case {"cut" }
 
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	elseif ( strcmp(substring(eingaben,2),"s" ))				# SVD - Singulaerwerte s
-        if ( eing_num==3 )
+    if ( eing_num==3 )
 			if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; end;
 			if (AUTO_FIGURE==1), fig(FIG_SINGULAR); end;
 			clf();
@@ -6535,11 +6454,11 @@ case {"cut" }
     endif;
 
 	%%%%% This holds the pipe to the plot window open so it can be manipulated. Close window to resume code execution from here
-	if (plot_active)
-		printf("	close current plot window before proceeding...\n");
-		pause(1)
-		while (waitforbuttonpress()==0) pause(0.5) endwhile;
-	endif;
+	%if (plot_active)
+	%	printf("	close current plot window before proceeding...\n");
+	%	pause(1)
+	%	while (waitforbuttonpress()==0) pause(0.5) endwhile;
+	%endif;
 
 
 
@@ -8182,7 +8101,7 @@ case {"cut" }
     AZ_3D=0;
     EL_3D=90;
 
-    case {"perspective" }
+  case {"perspective" }
     XRES_3D=100;
     YRES_3D=100;
     shading_3D="faceted";
@@ -8293,73 +8212,73 @@ case {"cut" }
 	  endif
 
   case {"interpolate_time"}
-	if (eing_num==1)
-		printf("Usage: interpolate_time <ref_vec>\n");
-	else
-		dummy = eval(substring(eingaben,2));
-		[freqvec, timevec, mdata] = time_resample(freqvec, timevec, mdata, dummy);
-	endif;
+    if (eing_num==1)
+      printf("Usage: interpolate_time <ref_vec>\n");
+    else
+      dummy = eval(substring(eingaben,2));
+      [freqvec, timevec, mdata] = time_resample(freqvec, timevec, mdata, dummy);
+    endif;
 
   case {"interpolate_wave"}
-	if (eing_num==1)
-		printf("Usage: interpolate_wave <ref_vec>\n");
-	else
-		dummy = eval(substring(eingaben,2));
-		[freqvec, timevec, mdata] = wave_resample(freqvec, timevec, mdata, dummy);
-	endif;
+    if (eing_num==1)
+      printf("Usage: interpolate_wave <ref_vec>\n");
+    else
+      dummy = eval(substring(eingaben,2));
+      [freqvec, timevec, mdata] = wave_resample(freqvec, timevec, mdata, dummy);
+    endif;
 
   case {"axes"}
-	if (eing_num<2)
-		printf("Current axis parameters\n");
-		wavenumber_axis
-		inverse_wavenumber_axis
-		time_axis
-		intensity_axis
-		arbitrary_axis
-		parameter_axis
-		s_x_axis
-		s_y_axis
-	else
-		switch substring(eingaben,2)
-			case {"fontsize" "fs"}
-				h = get(gcf,"currentaxes");
-				set(h,"fontsize",str2num(substring(eingaben,3)));
-			case {"linewidth" "lw"}
-				h = get(gcf,"currentaxes");
-				set(h,"linewidth",str2num(substring(eingaben,3)));
-		endswitch;
-	endif;
+	  if (eing_num<2)
+      printf("Current axis parameters\n");
+      wavenumber_axis
+      inverse_wavenumber_axis
+      time_axis
+      intensity_axis
+      arbitrary_axis
+      parameter_axis
+      s_x_axis
+      s_y_axis
+    else
+      switch substring(eingaben,2)
+        case {"fontsize" "fs"}
+          h = get(gcf,"currentaxes");
+          set(h,"fontsize",str2num(substring(eingaben,3)));
+        case {"linewidth" "lw"}
+          h = get(gcf,"currentaxes");
+          set(h,"linewidth",str2num(substring(eingaben,3)));
+      endswitch;
+    endif;
 
   case {"pp" }
-	if (eing_num<2)
-		printf("  Benutzung: pp <Dateiname>\n");
-		filename = basename(listenname);
-    filename = sprintf("%s-%d-f%d", filename, command_ctr, gcf());
-		printf("  Kein Dateiname angegeben. Setze: %s.emf\n", filename);
-	else
-		filename = substring(eingaben,2);
-	end;
-	filename = sprintf("%s.emf", filename);
-  if ( strcmp(PRINTOUT_SIZE,"") )
-	    print(filename, "-demf");
-  else
-      print(filename, "-demf", PRINTOUT_SIZE);
-  endif;
+    if (eing_num<2)
+      printf("  Benutzung: pp <Dateiname>\n");
+      filename = basename(listenname);
+      filename = sprintf("%s-%d-f%d", filename, command_ctr, gcf());
+      printf("  Kein Dateiname angegeben. Setze: %s.emf\n", filename);
+    else
+      filename = substring(eingaben,2);
+    end;
+    filename = sprintf("%s.emf", filename);
+    if ( strcmp(PRINTOUT_SIZE,"") )
+        print(filename, "-demf");
+    else
+        print(filename, "-demf", PRINTOUT_SIZE);
+    endif;
 
   case {"pj" }
-	if (eing_num<2)
-		printf("  Benutzung: pj <Dateiname>\n");
-		filename = basename(listenname);
-		printf("  Kein Dateiname angegeben. Setze: %s-%d-f%d.jpg\n", filename, command_ctr,gcf());
-	else
-		filename = substring(eingaben,2);
-	end;
-	filename = sprintf("%s-%d-f%d.jpg", filename, command_ctr, gcf());
-  if ( strcmp(PRINTOUT_SIZE,"") )
-	  print(filename, "-color", "-djpg", "-F:12");
-  else
-	  print(filename, "-color", "-djpg", "-F:6", PRINTOUT_SIZE);
-  end;
+    if (eing_num<2)
+      printf("  Benutzung: pj <Dateiname>\n");
+      filename = basename(listenname);
+      printf("  Kein Dateiname angegeben. Setze: %s-%d-f%d.jpg\n", filename, command_ctr,gcf());
+    else
+      filename = substring(eingaben,2);
+    end;
+    filename = sprintf("%s-%d-f%d.jpg", filename, command_ctr, gcf());
+    if ( strcmp(PRINTOUT_SIZE,"") )
+      print(filename, "-color", "-djpg", "-F:12");
+    else
+      print(filename, "-color", "-djpg", "-F:6", PRINTOUT_SIZE);
+    end;
 
 
   case {"pg" }
@@ -8432,20 +8351,20 @@ case {"cut" }
     end;
 
   case {"2dcos"}
-      if ( eing_num<5 )
-          printf("  Usage: 2dcos freq1 freq2 time1 time2\n");
-          printf("  2 new datasets for synchronous or asynchronous maps are generated\n");
-          printf("  For plotting, use:\n");
-          printf("    p o                   3D Version}\n");
-          printf("    p c                   Contour\n");
-          printf("    p cc                  Contour in color\n");
-          printf("    countour(freqvec,timevec, mdata);\n");
-          printf("    countourf(freqvec,timevec, mdata);\n");
-          printf("    corplot=@contourf, corplot=@contour  to select plot style\n");
-          printf("    Use COS_TRESHOLD_SYN, COS_TRESHOLD_ASYN for noise elimination\n");
-          printf("    Current values: %d, %d\n",COS_TRESHOLD_SYN*100, COS_TRESHOLD_ASYN*100);
+    if ( eing_num<5 )
+        printf("  Usage: 2dcos freq1 freq2 time1 time2\n");
+        printf("  2 new datasets for synchronous or asynchronous maps are generated\n");
+        printf("  For plotting, use:\n");
+        printf("    p o                   3D Version}\n");
+        printf("    p c                   Contour\n");
+        printf("    p cc                  Contour in color\n");
+        printf("    countour(freqvec,timevec, mdata);\n");
+        printf("    countourf(freqvec,timevec, mdata);\n");
+        printf("    corplot=@contourf, corplot=@contour  to select plot style\n");
+        printf("    Use COS_TRESHOLD_SYN, COS_TRESHOLD_ASYN for noise elimination\n");
+        printf("    Current values: %d, %d\n",COS_TRESHOLD_SYN*100, COS_TRESHOLD_ASYN*100);
 
-      else
+    else
 		fvon=str2num(substring(eingaben,2));
 		fbis=str2num(substring(eingaben,3));
 		tvon=str2num(substring(eingaben,4));
@@ -8453,7 +8372,7 @@ case {"cut" }
 		[startwert, realsta_wz] = ir_get_index(fvon,freqvec);
 		[stopwert, realsto_wz] = ir_get_index(fbis,freqvec);
 		if (stopwert<startwert)
-			h=stopwert; stopwert=startwert; startwert=h; 
+			h=stopwert; stopwert=startwert; startwert=h;
 		endif;
 		new_freqvec = freqvec(startwert:stopwert);
 		new_mdata=mdata(startwert:stopwert,:);
@@ -8691,7 +8610,6 @@ case {"cut" }
 	end;
 
   case {"to_abs"}
-      % Ansorptions- in Transmissionsspektrum umwandeln
       put();
       mdata(mdata<1e-5)=1e-5;
       mdata=-log10(mdata);
@@ -8727,7 +8645,7 @@ case {"cut" }
 	  clear -all;
     break;
   case {"about" }
-	message(SYSINFO);
+	  message(SYSINFO);
   case {"nop"}
   case {"rem" "REM" }				% Remark
     if (eing_num == 1)      % print all remarks
@@ -8735,27 +8653,27 @@ case {"cut" }
     endif;
   case {"" }			% nichts tun
   case {"let"}		% BASIC in memoriam....
-	put();
-	dummy = eingaben(5:end);
-	eval(dummy);
-  otherwise
-	midx=length(macro);
-	macro_to_run=0;
-	do							% Existiert ein Makro mit diesem Namen?
-		if (strcmp(macro{midx}.name,eingaben) ), macro_to_run=midx; end;
-		midx--;
-	until ( (midx<1) || (macro_to_run>0) );
-	if ( macro_to_run > 0 )					% wenn ja, Makro starten
-		        add_to_history("rem START MACRO");
-			for k=1:length(macro{macro_to_run}.command)
-				add_to_history(macro{macro_to_run}.command{k});
-				% printf("Will execute: %s\n",macro{i}.command{k});
-			end;
-			add_to_history("rem END MACRO");
-	else							% sonst Octave Kommando ausfuehren
-		put();
-		eval(eingaben);
-	end;
+    put();
+    dummy = eingaben(5:end);
+    eval(dummy);
+    otherwise
+    midx=length(macro);
+    macro_to_run=0;
+    do							% Existiert ein Makro mit diesem Namen?
+      if (strcmp(macro{midx}.name,eingaben) ), macro_to_run=midx; end;
+      midx--;
+    until ( (midx<1) || (macro_to_run>0) );
+    if ( macro_to_run > 0 )					% wenn ja, Makro starten
+              add_to_history("rem START MACRO");
+        for k=1:length(macro{macro_to_run}.command)
+          add_to_history(macro{macro_to_run}.command{k});
+          % printf("Will execute: %s\n",macro{i}.command{k});
+        end;
+        add_to_history("rem END MACRO");
+    else							% sonst Octave Kommando ausfuehren
+      put();
+      eval(eingaben);
+    end;
   endswitch
 
 catch                                               % trycatch
