@@ -2982,10 +2982,31 @@ do
 	    end;
 	    baseline_info=sprintf("Absorbance (Blank: %f-%f [Specs: %d-%d])", PRE_TIME_START, PRE_TIME, index_start, index_stop);
 
+    case "timelin"
+      put();
+      index_start = 1;
+      if eing_num >=3
+        index_stop = str2num(substring(eingaben,3));
+      else
+        index_stop = length(timevec);
+      endif
+      for i=1:length(timevec)
+        lincorr=interp1([timevec(index_start),timevec(index_stop)], [mdata(i,index_start),mdata(i,index_stop)], timevec);
+        if (LIVE_MODE)
+            fig(FIG_LIVE);
+            plot(timevec,mdata(i,:), timevec, lincorr, timevec, mdata(i,:)-lincorr);
+            plot_label=sprintf("%d/%d: %f", i, length(freqvec), freqvec(i));
+            legend(plot_label);
+            drawnow();
+        end;
+        mdata(i,:)=mdata(i,:)-lincorr;
+      endfor
+
+
 	  case "pretime"					% linear fit to baseline is extrapolated and subtracted from the whole set for each wavenumber
 	    put();
 	    index_start = 1;
-	    if ( REACTION_START_INDEX > 5 )
+      if ( REACTION_START_INDEX > 5 )
 			  index_stop = REACTION_START_INDEX-1;		%  Bereich verkleinern, um sicherzugehen...
 	    else
 			  printf("  Ende der Vorperiode festlegen:\n");
@@ -3156,6 +3177,95 @@ do
           clear spline_y;
 
       endif
+
+    case "lastspec"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
+      if (eing_num == 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
+        put()
+        norm1 = str2num(substring(eingaben,3));
+        norm2 = str2num(substring(eingaben,4));
+        % TODO: multiple areas
+        inorm1=ir_get_index(norm1, freqvec);
+        inorm2=ir_get_index(norm2, freqvec);
+        if ( inorm1>inorm2 )
+          h=inorm1; inorm1=inorm2;inorm2=h;
+        end;
+      else
+        inorm1 = 1;
+        inorm2 = length(freqvec);
+      endif
+
+      lastspec = mdata(:,length(timevec));
+
+      % fit des Korrekturspektrums (Luftwasser etc.) an Datensatz.
+      % fitfunction is a*x+b
+      fitpar = [-0.1,0];
+      for i=1:length(timevec)
+        [normf, normp] = leasqr(lastspec(inorm1:inorm2), mdata(:,i)(inorm1:inorm2), fitpar, @specnorm);
+        fitspec = (lastspec*normp(1)+normp(2));
+        corrspec= mdata(:,i)-fitspec;
+
+
+        if (LIVE_MODE)
+          fig(FIG_LIVE);
+          plot(freqvec, mdata(:,i), freqvec, fitspec, freqvec, corrspec);
+          plot_label=sprintf("%d/%d: %f", i, length(timevec), timevec(i));
+          legend(plot_label);
+          drawnow();
+        end;
+
+        mdata(:,i) = corrspec;
+      endfor
+
+    case "trace"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
+      if (eing_num>=3)
+
+        if (eing_num == 3)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
+          put()
+          norm1 = str2num(substring(eingaben,3));
+          inorm1=ir_get_index(norm1, freqvec);
+          trace = mdata(inorm1,:);
+        elseif (eing_num >= 4)
+          put()
+          norm1 = str2num(substring(eingaben,3));
+          norm2 = str2num(substring(eingaben,4));
+          inorm1=ir_get_index(norm1, freqvec);
+          inorm2=ir_get_index(norm2, freqvec);
+          if ( inorm1>inorm2 )
+            h=inorm1; inorm1=inorm2;inorm2=h;
+          end;
+
+          trace = mean(mdata(inorm1:inorm2),1);
+        endif
+
+        # fit der trace an datensatz
+        fitpar = [-0.1,0];
+        for i=1:length(freqvec)
+          [normf, normp] = leasqr(trace, mdata(i,:), fitpar, @specnorm);
+          fitspec = (trace*normp(1)+normp(2));
+          corrtrace= mdata(i,:)-fitspec;
+
+
+          if (LIVE_MODE)
+            fig(FIG_LIVE);
+            plot(timevec, mdata(i,:), timevec, fitspec, timevec, corrtrace);
+            plot_label=sprintf("%d/%d: %f", i, length(freqvec), freqvec(i));
+            drawnow();
+          end;
+
+          mdata(i,:) = corrtrace;
+        endfor
+
+
+
+      else
+        printf(" Usage: baseline timetrace <time>\n");
+      endif
+
+
+
+
+
+
 
     case "water"            % nimmt erstes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab: Zur Korrektur von Luftwasser     PF
       if (eing_num == 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
@@ -5461,21 +5571,24 @@ do
 	elseif ( strcmp(substring(eingaben,2),"r"))
 	    fig(FIG_SVD);
 	    clf();
-	    if ( eing_num == 3 ), vals_to_plot = str2num(substring(eingaben,3)); endif;
-	    % vals_to_plot = 5;				% ???
+	    if ( eing_num == 3 )
+        vals_to_plot = str2num(substring(eingaben,3));
+      else
+        vals_to_plot = 5;
+      endif
 	    printf("  vals_to_plot=%d\n", vals_to_plot);
 	    for komponente=1:vals_to_plot
-			subplot(vals_to_plot,2,komponente*2-1);
-			plot(freqvec, u_rot(:,komponente));
-			legend('rotated');
-			subplot(vals_to_plot,2,komponente*2);
-			if ( LOG_KINETICS==0)
-				plot(timevec, v_rot(:,komponente));
-			else
-				semilogx(timevec, v_rot(:,komponente));
-			endif;
-			legend('rotated');
+        subplot(vals_to_plot,2,komponente*2-1);
+        plot(freqvec, u_rot(:,komponente));
+        subplot(vals_to_plot,2,komponente*2);
+        if ( LOG_KINETICS==0)
+          plot(timevec, v_rot(:,komponente));
+        else
+          semilogx(timevec, v_rot(:,komponente));
+        endif;
 	    endfor
+      S  = axes( 'visible', 'off', 'title', 'rotated' );
+
 	elseif ( strcmp(substring(eingaben,2),"rot" ) )
 	    printf("  Info: \" plot r\" zum Plotten nur der rotierten Matrix verwenden!\n");
 	    fig(FIG_SVD);
@@ -5496,8 +5609,8 @@ do
         else
           semilogx(timevec, v(:,komponente), timevec, v_rot(:,komponente));
         endif;
-        legend('original','rotated');
 	    end
+      legend('original','rotated', 'location', 'southeast');
 	    % Baustelle: wenn grace eingestellt ist, hier kurzzeitig auf gnuplot umstellen!
 	    if (PLOT_ROT_HISTOGRAMS==1)
         if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
@@ -5553,8 +5666,9 @@ do
 	        bis = str2num(substring(eingaben,3));
 	        for i=1:bis
 		        subplot(bis,2,(i-1)*2+1);					       % Base Vector
-		        plot_label = sprintf("-;%d;%d",i,mod(i,5));
-		        plot(freqvec, u(:,i), plot_label);
+		        plot_label = sprintf("SVD component: %d",i);
+		        plot(freqvec, u(:,i));
+            title(plot_label);
 		        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set (gca,"XDir","reverse"); end;
 		        flipx();
 		        if (i==bis)
@@ -5562,27 +5676,29 @@ do
 		        endif;
 		        ylabel(intensity_axis);
 		        subplot(bis,2,(i-1)*2+2);
-		        plot_label=sprintf("-;SV:%f;1", s(i,i));			% Data
+		        plot_label=sprintf("Singular Value: %f", s(i,i));			% Data
 		        if ( LOG_KINETICS==0 )
-			        plot(timevec, v(:,i), plot_label);
+			        plot(timevec, v(:,i));
 		        else
-			        semilogx(timevec, v(:,i), plot_label);
+			        semilogx(timevec, v(:,i));
 		        endif;
+            title(plot_label);
 		        if ( SVD_FIT(i) == 1 )
 		            hold on;
 		            plot_label=sprintf("-;k=%f;3", svdfit(i).parameters(3));
 		            if ( LOG_KINETICS == 0 )
-			              plot(timevec, svdfit(i).values, plot_label);
+			              plot(timevec, svdfit(i).values);
 		            else
-			              semilogx(timevec, svdfit(i).values, plot_label);
+			              semilogx(timevec, svdfit(i).values);
 		            end;
+                title(plot_label);
 		            hold off;
 		            printf("%s",svdfit(i).report);
 		        endif;
 		        if (i==bis)
 		            xlabel (time_axis);
 		        endif;
-		        % ylabel (intensity_axis);
+
 	      	endfor;
 		elseif ( eing_num > 3 )							% Komponenten
 			PLOT_SVD_STYLE = str2num(substring(eingaben,4));
@@ -5911,9 +6027,10 @@ do
 			[bis_index, bis_wz] = ir_get_index(bis, freqvec);		# noch vertauschen. wenn n�tig....
 			oplot=mdata(von_index:bis_index,:);
 			oplot=oplot';
-			for i=2:(bis_index - von_index)
-			oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
-			endfor
+      % if plotted with offset
+			%for i=2:(bis_index - von_index)
+			%  oplot(:,i) = oplot(:,i) - abs(min(oplot(:,i-1))) - abs(max(oplot(:,i)));
+			%endfor
 			if ( LOG_KINETICS==0 )
 				plot(timevec,oplot(:,:));
 			else
