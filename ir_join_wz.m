@@ -20,7 +20,7 @@ function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time
     overlap_idx2 = get_index(min(freq1), freq2);
     data1 = mdata2(1:overlap_idx2-1,:);
 
-    mdata1_overlapp = mdata1_overlapp(1:overlap_idx1,:);
+    mdata1_overlapp = mdata1(1:overlap_idx1,:);
     mdata2_overlapp = mdata2(overlap_idx2:end,:);
     mdata2_overlapp_comp = interp1(freq2(overlap_idx2:end), mdata2_overlapp, freq1(1:overlap_idx1),"extrap");
 

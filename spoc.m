@@ -155,7 +155,7 @@ global	  mak_nr=0;				% Anzahl definierter Makros
 
 % hier den Pfad des Programmes eintragen. Wird bei install in die .octaverc geschrieben.
 %global SPOC_PATH = "D:/OctaveSkripte/SPOC";
-global SPOC_PATH = file_path = fileparts(mfilename('fullpath'));
+global SPOC_PATH = fileparts(mfilename('fullpath'));
 global SPOC_HISTORY_PATH = "C:/Temp"
 global DEFAULT_DATA_PATH = "C:/Data"
 
@@ -297,6 +297,16 @@ print_kin_only = 0;
 % Automatische Berechnung: 1. Wert ein/aus
 %                                                      2. Wert Anzahl der St�tzstellen
 %
+
+cal=  [1507, 1515,
+  1519,   1528,
+  1530,   1556,
+  1630,   1617,
+  1640,   1630];
+  
+is = [1507, 1519, 1530, 1630, 1640];
+should = [1515, 1528, 1556, 1617, 1630];  
+
 global BL_SPLINE_AUTO = [ 1, 10];
 global BL_SPLINE_FERY = [    1057,   1070,   1057,
    1060,   1080,   1070,
@@ -519,15 +529,28 @@ global BL_SPLINE_DESCD2O_old = [1484, 1504, 1494,
         1652, 1682, 1672,
 				1675,	1682,	1682];
 
-global BL_SPLINE_DESCD2O = [1484, 1504, 1494,
+global BL_SPLINE_DESCD2O_A = [1487, 1494, 1490,
+        1494, 1515, 1505,
+        1515, 1532, 1520,
+        1532, 1556, 1540,
+        1556, 1582, 1565,
+        1582, 1593, 1593];
+        
+global BL_SPLINE_DESCD2O_FTIR = [1487, 1504, 1494,
         1484, 1545, 1524,
         1545, 1600, 1576,
         1600, 1656, 1629,
         1656, 1682, 1665,
         1656, 1682, 1682];
 
+global BL_SPLINE_DESCD2O = [1573.5, 1588, 1573.5,
+        1588, 1630, 1615, 
+        1630, 1656, 1632,
+        1640, 1666, 1660,
+        1666, 1688, 1665,
+        1686, 1697.5, 1697];
 
-global BL_SPLINE = BL_SPLINE_BackSubD2O;
+global BL_SPLINE = BL_SPLINE_DESCD2O_A;
 
 % *******************************  Definitionen, vordefiniertes Macro
 %global macro;
@@ -2984,9 +3007,12 @@ do
 
     case "timelin"
       put();
-      index_start = 1;
-      if eing_num >=3
+      index_start = REACTION_START_INDEX;
+      if eing_num ==3
         index_stop = str2num(substring(eingaben,3));
+      elseif eing_num ==4
+        index_start = str2num(substring(eingaben,3));
+        index_stop = str2num(substring(eingaben,4));
       else
         index_stop = length(timevec);
       endif
@@ -3520,12 +3546,11 @@ do
   case {"svdremove" }
     % 1 Komponente entfernen, der Platz wird mit den nachfolgenden K. aufgefüllt
     if (eing_num==2)
-        val=str2num( substring(eingaben,2) );
-        for i=val:(columns(s)-1)
-      u(:,i) = u(:,i+1);
-      s(i,i) = s(i+1,i+1);
-      v(:,i) = v(:,i+1);
-        end
+        idx=str2num( substring(eingaben,2) );
+        u(:,idx)=[];
+        v(:,idx)=[];
+        s(idx,:)=[];
+        s(:,idx)=[];
     else
         printf("svdremove <nr>\n");
     end
@@ -8136,7 +8161,7 @@ do
 
   case {"joinwz"}
     if (eing_num<3 )							% PF
-      printf("  Usage: join <#1> <#2> [w1 | w2]\n");
+      printf("  Usage: joinwz <#1> <#2> [w1 | w2]\n");
       printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
     else
       js1 = str2num(substring(eingaben,2));
@@ -8154,6 +8179,7 @@ do
       endif
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
       if ( min(timevec_a{js1}) <= min(timevec_a{js2}) && max(timevec_a{js1}) >= max(timevec_a{js2}))
+        # make joined freqvec
         freq1 = freqvec_a{js1};
         if ((max(freqvec_a{js1}) < max(freqvec_a{js2})) && (min(freqvec_a{js1}) > min(freqvec_a{js2})))
           printf("Data set 2 is complete subset of set 1. Joining is not necessary. Use average <av> instead.");
@@ -8184,6 +8210,113 @@ do
         printf("sets cannot be joined. Time vector of set 2 must be a subset of set 1. Cut time of set 2 and try again.\n")
       endif;
     endif;
+    
+  case {"jointime"}
+    if (eing_num<3 )							% PF
+      printf("  Usage: join_time <#1> <#2> [w1 | w2]\n");
+      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
+    else     
+      joinable = 1;
+      js1 = str2num(substring(eingaben,2));
+      js2 = str2num(substring(eingaben,3));
+
+      if (eing_num==4)
+        weight1 = str2num(substring(eingaben,4));
+        weight2 = 1;
+      elseif (eing_num>=5)
+        weight1 = str2num(substring(eingaben,4));
+        weight2 = str2num(substring(eingaben,5));
+      else
+        weight1 = 1;
+        weight2 = 1;
+      endif
+      
+      # make freqvecs compatible
+      freq1 = freqvec_a{1};
+      freq2 = freqvec_a{2};      
+      mdata1 = mdata_a{1};
+      mdata2 = mdata_a{2};
+      
+      if ( min(freq1) <= min(freq2) && max(freq1) >= max(freq2))    # Set 2 complete subset of 1
+        printf("  Frequency vectors will be made compatibe using linear interpolation.");
+        # make joined freqvec
+        len1 = length(freq1);
+        len2 = length(freq2);
+        
+        if len2 > len1
+          mdata1 = interp1(freq1, mdata1, freq2, "extrap");
+          freq = freq2;
+        else  
+          mdata2 = interp1(freq2, mdata2, freq1, "extrap");
+          freq = freq1;
+        endif
+        
+      elseif ( min(freq1) <= min(freq2) && max(freq1) <= max(freq2) && max(freq1) >= min(freq2))    # Set 1 lower than 2 with overlap
+        overlap_idx1 = get_index(min(freq2), freq1);
+        overlap_idx2 = get_index(max(freq1), freq2);
+        freq1_overlap = freq1(overlap_idx1:end);
+        freq2_overlap = freq1(1:overlap_idx2);
+        
+        len1 = length(freq1_overlap);
+        len2 = length(freq2_overlap);
+        
+        if len2 > len1
+          mdata1 = interp1(freq1_overlap, mdata1(overlap_idx1:end,:), freq2_overlap, "extrap");
+          mdata2 = mdata2(1:overlap_idx2);
+          freq = freq2_overlap;
+        else  
+          mdata1 = mdata1(overlap_idx1:end,:);
+          mdata2 = interp1(freq2_overlap, mdata2(1:overlap_idx2,:), freq1_overlap, "extrap");
+          freq = freq1_overlap;
+        endif
+        
+      elseif ( min(freq2) <= min(freq1) && max(freq2) <= max(freq1) && max(freq2) >= min(freq1))    # Set 2 lower than 1 with overlap   
+        overlap_idx1 = get_index(max(freq2), freq1);
+        overlap_idx2 = get_index(min(freq1), freq2);
+        freq1_overlap = freq1(1:overlap_idx1);
+        freq2_overlap = freq1(overlap_idx2:end);
+        
+        len1 = length(freq1_overlap);
+        len2 = length(freq2_overlap);
+        
+        if len2 > len1
+          mdata1 = interp1(freq1_overlap, mdata1(1:overlap_idx1,:), freq2_overlap, "extrap");
+          mdata2 = mdata2(overlap_idx2:end);
+          freq = freq2_overlap;
+        else  
+          mdata1 = mdata1(1:overlap_idx1,:);
+          mdata2 = interp1(freq2_overlap, mdata2(overlap_idx2:end,:), freq1_overlap, "extrap");
+          freq = freq1_overlap;
+        endif
+
+        
+      else
+        printf("  Sets cannot be joined. Frequency vectors must have an overlap.\n")
+        joinable = 0;
+      endif;
+      
+      if joinable
+         # make joined timevec
+        time1 = timevec_a{js1};
+        time2 = timevec_a{js2};
+        
+      
+        loaded_files++;
+        listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq);
+
+        startindex_a{loaded_files} = startindex_a{js1};
+        time_axis_a{loaded_files}=time_axis;
+        wavenumber_axis_a{loaded_files} = wavenumber_axis;
+        infofield_a{loaded_files}.info = sprintf("Joined sets %d and %d\n", js1, js2);
+        printf("  Gespeichert in # %d\n", loaded_files);
+        if ( loaded_files == 1 )
+          number_a = 1;
+        end;
+      endif  
+  
+      
+    endif    
 
 
   case {"inc_ratio" }
