@@ -50,6 +50,9 @@ pkg load splines
 
 %
 %	TODO:
+
+#   - write apropos for: cuspline, timelin, etc.
+
 %   - konsistent machen fuer alle isfield() Funktionen...
 %   - infofield durch infofield.type, infofield.info etc. ersetzen. genauere informationen speichern
 %   - mdata, freqvec und timevec sowie alle anderen Parameter in eine Klasse
@@ -181,6 +184,10 @@ global time_exclude_from=0;
 global loaded_files = 0;
 global in_bench = 0;
 
+# Vectors for frequency calibration
+global is;
+global should;
+
 %global DEFAULT_PLOTTER="gnuplot";
 global DEFAULT_PLOTTER="qt";
 %global DEFAULT_PLOTTER="fltk";
@@ -188,6 +195,8 @@ global FRAME_DELAY=500;
 
 global DEFAULT_COLOR = "b";			% Blue
 global AUTO_FIGURE = 1;				  % Programmgesteuerte Ausgabe   TODO
+
+global CALIBRATION_FIGURE = 5;  # shows frequency calibration
 
 % activate chosen graphics toolkit
 graphics_toolkit(DEFAULT_PLOTTER);
@@ -303,9 +312,9 @@ cal=  [1507, 1515,
   1530,   1556,
   1630,   1617,
   1640,   1630];
-  
-is = [1507, 1519, 1530, 1630, 1640];
-should = [1515, 1528, 1556, 1617, 1630];  
+
+is = [1506, 1517, 1541, 1556, 1633, 1640];
+should = [1514, 1527, 1530, 1549, 1617, 1629];
 
 global BL_SPLINE_AUTO = [ 1, 10];
 global BL_SPLINE_FERY = [    1057,   1070,   1057,
@@ -535,7 +544,7 @@ global BL_SPLINE_DESCD2O_A = [1487, 1494, 1490,
         1532, 1556, 1540,
         1556, 1582, 1565,
         1582, 1593, 1593];
-        
+
 global BL_SPLINE_DESCD2O_FTIR = [1487, 1504, 1494,
         1484, 1545, 1524,
         1545, 1600, 1576,
@@ -543,14 +552,36 @@ global BL_SPLINE_DESCD2O_FTIR = [1487, 1504, 1494,
         1656, 1682, 1665,
         1656, 1682, 1682];
 
-global BL_SPLINE_DESCD2O = [1573.5, 1588, 1573.5,
-        1588, 1630, 1615, 
+global BL_SPLINE_DESCD2O_B = [1573.5, 1588, 1573.5,
+        1588, 1630, 1615,
         1630, 1656, 1632,
         1640, 1666, 1660,
         1666, 1688, 1665,
         1686, 1697.5, 1697];
 
-global BL_SPLINE = BL_SPLINE_DESCD2O_A;
+global BL_SPLINE_DESCD2O_C = [1551.5, 1570, 1552.5,
+        1560, 1581, 1567,
+        1581, 1613, 1600,
+        1613, 1625, 1617,
+        1625, 1652, 1641,
+        1652, 1670, 1660,
+        1662, 1670, 1670];
+
+global BL_SPLINE_DESCD2O_D = [1514, 1530, 1514,
+        1520, 1551, 1530,
+        1551, 1583, 1560,
+        1583, 1605, 1595,
+        1605, 1626, 1610,
+        1610, 1626, 1626];
+
+global BL_SPLINE_DESCD2O_E = [1578, 1588, 1578,
+        1588, 1630, 1615,
+        1630, 1656, 1632,
+        1640, 1666, 1660,
+        1666, 1688, 1675,
+        1688, 1703, 1703];
+
+global BL_SPLINE = BL_SPLINE_DESCD2O_D;
 
 % *******************************  Definitionen, vordefiniertes Macro
 %global macro;
@@ -1620,18 +1651,18 @@ function rv=adjust_data()					% Baustelle: den aktuellen Datensatz f�r GF vorb
 		until ( los2<1 );
 		printf("  Erster Datenpunkt nach Reaktionsstart bei timevec(%d)=%f\n", los, timevec(los));
 		step = timevec(los+1)-timevec(los);
-		printf("  Reaktionsstart - Neue Nullpunktfestlegung?\n");
-		printf("  Vorgeschlagene �nderung: dt = %f\n", timevec(los)-step);
-		jnc = input("  [U]ebernehmen, [M]anuell �ndern, [W]eiter?","C");
+		printf("  Reaction start definition - Set new zero time point?\n");
+		printf("  Proposed change: dt = %f\n", timevec(los)-step);
+		jnc = input("  [k]eep, [m]anual, [n]o change?","s");
 		if ( jnc=="m")
-			np = input("  Nullpunktfestlegung (0 .. keine �nderung) - neuer Wert >");
-		elseif ( jnc == "u")
+			np = input("  Set new time zero index ([0]: no change) - new value >");
+		elseif ( jnc == "k")
 			np = timevec(los)-step;
-			printf("  Vorgeschlagener Wert uebernommen\n");
+			printf("  Proposed zero time is applied\n");
 		else
 			% Do nothing
 			np=0.0;
-			printf("  Aktuelle Zeitachse wird beibehalten\n");
+			printf("  Time axis remains unchanged\n");
 		end;
 		timevec = timevec-np;
 	end;
@@ -2865,7 +2896,7 @@ do
         fflush(stdout);
         clear jn;
         printf("Soll Ergebnis gespeichert werden?\n");
-        jn = input("[j/n] > ","c");
+        jn = input("[y/n] > ","c");
         if jn == "j"
           fflush(stdout);
           clear file;
@@ -2881,6 +2912,68 @@ do
     else
       apropos("integ");
     end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Frequency calibration
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+  case  {"calibration" "cal"}
+    %Request calibration points
+    jn="n";
+    cal_count="n";
+    if length(is) && length(should)
+        fflush(stdout);
+        clear jn;
+        printf("  Found calibration data. Use it?\n");
+        is
+        should
+        jn=input("[y/n] > ","s");
+    endif
+
+    # enter by hand
+    if jn!="y"
+      fflush(stdout);
+      clear cal_count;
+      printf("  Enter number of calibration points:\n");
+      cal_count = input("> ");
+      cal_count = cast(cal_count,'int8');
+      if isinteger(cal_count)
+        clear is;
+        clear should;
+        is=[];
+        should=[];
+        for i=1:cal_count
+          fflush(stdout);
+          printf("%d. IS value: \n", i);
+          is(i)=input(" > ");
+          printf("%d. SHOULD value: \n", i);
+          should(i)=input(" > ");
+        endfor
+        fflush(stdout);
+        clear jn;
+        printf("  Calibration points entered. Proceed?\n");
+        jn=input("[y/n] > ","s");
+      else
+        printf("Please enter an integer specifying the number of calibration points.\n");
+      endif
+    endif
+
+    if jn=="y"
+      params = [1,0];
+      [fitfun, fitpar] = leasqr(is,should,params,@linear);
+      figure(CALIBRATION_FIGURE);
+      plot(is, should,"+", freqvec, freqvec*fitpar(1)+fitpar(2));
+      fflush(stdout);
+      clear jn;
+      printf("Apply calibration?\n");
+      jn=input("[y/n] > ","s");
+      if jn=="y"
+        put();
+        freqvec=freqvec*fitpar(1)+fitpar(2);
+        printf("  Calibration applied successfully\n");
+      endif
+    endif
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Baseline correction methods
@@ -3129,6 +3222,52 @@ do
         fflush(stdout);
 	    end;
 	    baseline_info = "linear";
+
+    case "cuspline"
+      put();
+      start_index = 0;
+      stop_index = 0;
+      area_spline=0;
+      if eing_num >= 3
+        smoothing_factor = str2num(substring(eingaben,3));
+        if eing_num >= 5
+          start_index = str2num(substring(eingaben,4));
+          stop_index = str2num(substring(eingaben,5));
+        endif
+      else
+        smoothing_factor = 0.005;
+        printf("  Smoothing factor set to default value: 0.005\n");
+        printf("  Use cuspline <smoothing_factor> to change value\n")
+      endif
+
+      if start_index && stop_index
+        av = mean(mdata(:,start_index:stop_index),2);
+        [spline, b] = csaps (freqvec, av, smoothing_factor, freqvec);
+        area_spline = 1;
+        bl_fit_startparameter = [1,0];
+      endif
+
+      for i=1:length(timevec)
+        if area_spline
+          [spline, fitpar] = leasqr(spline, mdata(:,i), bl_fit_startparameter, PRESPLINE_FUNCTION);
+        else
+          [spline, fitpar] = csaps (freqvec, mdata(:,i), smoothing_factor, freqvec);
+        endif
+
+        corrected_spec = mdata(:,i)-spline;
+
+        if (LIVE_MODE)
+          fig(FIG_LIVE);
+          plot(freqvec, mdata(:,i), freqvec, spline, freqvec, corrected_spec);
+          plot_label=sprintf("%d/%d: %f", i, length(timevec), timevec(i));
+          legend(plot_label);
+          drawnow();
+        end;
+        mdata(:,i) = corrected_spec;
+
+      endfor
+
+
 	  case "spline"		% Baseline
 			% Baustelle
 			% Das Spline �berpr�fen; automatisch, oder vordefiniert;
@@ -3142,7 +3281,7 @@ do
 			else
 				put();
 				if ( (length(BL_SPLINE)==2) && (BL_SPLINE(1)==1) )				% automatische Berechnung der Splinefunktion
-					stuetzstellen = BL_SPLINE(2) +1;								% overlapping intervals (-1), R�nder +2
+					stuetzstellen = BL_SPLINE(2) +1;								        % overlapping intervals (-1), R�nder +2
 					intervallbreite = (max(freqvec) - min(freqvec))/BL_SPLINE(2);
 					LV = min(freqvec);
 					UV = max(freqvec);
@@ -3348,25 +3487,30 @@ do
 						% Die Vorperiode sinnvoll mitteln, daraus eine Splinefunktion ermitteln und diese gefittet
 						% abziehen
 	    put();
-
-
-	    if ( REACTION_START_INDEX > 1 )
-			  index_stop = REACTION_START_INDEX;
-	    else
-			  printf("  Ende der Vorperiode festlegen:\n");
-			  adjust_data();
-			  index_stop = REACTION_START_INDEX;
-	    end;
-
+      start_index = 0;
+      stop_index = 0;
       % 1. Vorperiode linear approximieren
       if (eing_num == 2)
         index_start = 1;
+        index_stop = REACTION_START_INDEX;
       elseif (eing_num == 3)
         index_start = str2num(substring(eingaben,3));
-      elseif (eing_num == 4)
+        index_stop = REACTION_START_INDEX;
+      elseif (eing_num >= 4)
         index_start = str2num(substring(eingaben,3));
         index_stop = str2num(substring(eingaben,4));
       endif;
+
+      if index_stop < index_start
+        temp = index_stop;
+        index_stop = index_start;
+        index_start = temp;
+      endif
+
+
+	    if ( index_stop == index_start )
+			  printf("  Warning: Start and End indices of baseline are equal:\n");
+	    end;
 
 
 	    % printf("  Analysiere Vorperiode\n" ); fflush(stdout);
@@ -5395,296 +5539,296 @@ do
 #
   case {"plot" "p" }	# Zentrale Plotfunktion
     von=1; bis=1;
-	plot_active=1;
+	  plot_active=1;
     if (eing_num>1)
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%				<plot globalfit>
-      	if ( strcmp(substring(eingaben,2),"globalfit") || strcmp(substring(eingaben,2),"gf") || strcmp(substring(eingaben,2),"glf") )
-    	    % Plottet die letzten Ergebnisse des Globalfits
-    	    print_together = 0;
-			print_bspec_only = 0;
-			print_kin_only = 0;
-    	    if ( eing_num==3 )
-				if ( strcmp(substring(eingaben,3),"1") )
-					print_together = 1;
-				elseif (strcmp(substring(eingaben,3),"bspec"))
-					print_bspec_only = 1;
-					print_together = 1;
-		elseif (strcmp(substring(eingaben,3),"kin"))
-			print_kin_only = 1;
-			print_together = 1;
-		else
-			printf("  plot globalfit		in separate Grafiken plotten\n");
-			printf("  plot globalfit 1		in eine einzige Grafik plotten\n");
-		    printf("  plot globalfit bspec | kin\n");
-		    printf("  Geplottete Daten: uu(:,#nr)\n");
-		endif;
-	endif;
+      if ( strcmp(substring(eingaben,2),"globalfit") || strcmp(substring(eingaben,2),"gf") || strcmp(substring(eingaben,2),"glf") )
+        % Plottet die letzten Ergebnisse des Globalfits
+        print_together = 0;
+        print_bspec_only = 0;
+        print_kin_only = 0;
+        if ( eing_num==3 )
+          if ( strcmp(substring(eingaben,3),"1") )
+            print_together = 1;
+          elseif (strcmp(substring(eingaben,3),"bspec"))
+            print_bspec_only = 1;
+            print_together = 1;
+          elseif (strcmp(substring(eingaben,3),"kin"))
+            print_kin_only = 1;
+            print_together = 1;
+          else
+            printf("  plot globalfit		in separate Grafiken plotten\n");
+            printf("  plot globalfit 1		in eine einzige Grafik plotten\n");
+              printf("  plot globalfit bspec | kin\n");
+              printf("  Geplottete Daten: uu(:,#nr)\n");
+          endif;
+        endif;
 
-	printf("  Fit:\n"); fflush(stdout);
-	%printf("  Konvergenz: %f\n", fun); fflush(stdout);
+        printf("  Fit:\n"); fflush(stdout);
+        %printf("  Konvergenz: %f\n", fun); fflush(stdout);
 
-	printf("Ergebnis:\n");
-	AMatrix				% Sollte die Transformationsmatrix sein
-	KMatrix
-	OMatrix
-	% [sse, fv] = model(fitparameter, timevec, kineticfun, components, weights);
-	%user_plot(timevec,fv);
-	%subplot(2,1,2);
-	%diff_matrix = fv - kineticfun;
-	%user_plot(timevec, diff_matrix);
+        printf("Ergebnis:\n");
+        AMatrix				% Sollte die Transformationsmatrix sein
+        KMatrix
+        OMatrix
+        % [sse, fv] = model(fitparameter, timevec, kineticfun, components, weights);
+        %user_plot(timevec,fv);
+        %subplot(2,1,2);
+        %diff_matrix = fv - kineticfun;
+        %user_plot(timevec, diff_matrix);
 
-	% Ergebnisse plotten
-	% Basisspektren berechnen
-	% nach absteigenden k's sortieren:
-	[kn, k_order] = sort(KMatrix,"descend");
-	printf("  Globalfit - Order of Components:\n");
-	for i=1:components
-		printf("k(%d) = %f      t1/2(%d) = ln2/k = %f\n", k_order(i), KMatrix(k_order(i)), k_order(i), -log(2)/KMatrix(k_order(i)) );
-	endfor;
+        % Ergebnisse plotten
+        % Basisspektren berechnen
+        % nach absteigenden k's sortieren:
+        [kn, k_order] = sort(KMatrix,"descend");
+        printf("  Globalfit - Order of Components:\n");
+        for i=1:components
+          printf("k(%d) = %f      t1/2(%d) = ln2/k = %f\n", k_order(i), KMatrix(k_order(i)), k_order(i), -log(2)/KMatrix(k_order(i)) );
+        endfor;
 
-	fig(FIG_GLOBALFIT_RESULT);
-	%clf();
-	%TODO:   kineticfun -> kinetic_to_fit, timevec -> timevec_to_fit
-	%
-	hold off;
-	if ( print_together == 0 )
-		for i=1:components
-			subplot(components,2,(i-1)*2+1);
-			plot(freqvec,uu(:,k_order(i)));
-			legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
-			legend(legend_text);
-			printf("  k_%d = %f (t au_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
-			%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
-			flipx();
-			subplot(components,2,(i-1)*2+2);						% TODO: hier die echten Fits plotten
-			% Alte version:
-			% plot(timevec,vv(:,k_order(i)));						% Maybe the next line makes problems with grace...
-			%legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));			% oder Legende irgendwie anders sinnvoll machen...
-			%legend(legend_text);
-			% Neue Version
-			% Todo: Kinetiken mittels Semilogx plotten....
-			if ( LOG_KINETICS == 0 )
-				plot(timevec,kineticfun(:,i),"-b");		% aus SVD					% TODO: K's als legende zu den Basisspektren
-			else
-				semilogx(timevec,kineticfun(:,i),"-b");		% aus SVD					% TODO: K's als legende zu den Basisspektren
-			endif;
-			hold on;
-			if ( LOG_KINETICS == 0 )
-					plot(timevec_to_fit, fv(:,i),"-r");			% gefittet
-			else
-				semilogx(timevec_to_fit, fv(:,i),"-r");			% gefittet
-			end;
-		endfor;
-		printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
-		printf ("  In eine / mehrere Grafiken plotten: print_together\n");
-		hold off;
-		legend("SVD","globalfit");
+        fig(FIG_GLOBALFIT_RESULT);
+        %clf();
+        %TODO:   kineticfun -> kinetic_to_fit, timevec -> timevec_to_fit
+        %
+        hold off;
+        if ( print_together == 0 )
+          for i=1:components
+            subplot(components,2,(i-1)*2+1);
+            plot(freqvec,uu(:,k_order(i)));
+            legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
+            legend(legend_text);
+            printf("  k_%d = %f (t au_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
+            %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
+            flipx();
+            subplot(components,2,(i-1)*2+2);						% TODO: hier die echten Fits plotten
+            % Alte version:
+            % plot(timevec,vv(:,k_order(i)));						% Maybe the next line makes problems with grace...
+            %legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));			% oder Legende irgendwie anders sinnvoll machen...
+            %legend(legend_text);
+            % Neue Version
+            % Todo: Kinetiken mittels Semilogx plotten....
+            if ( LOG_KINETICS == 0 )
+              plot(timevec,kineticfun(:,i),"-b");		% aus SVD					% TODO: K's als legende zu den Basisspektren
+            else
+              semilogx(timevec,kineticfun(:,i),"-b");		% aus SVD					% TODO: K's als legende zu den Basisspektren
+            endif;
+            hold on;
+            if ( LOG_KINETICS == 0 )
+                plot(timevec_to_fit, fv(:,i),"-r");			% gefittet
+            else
+              semilogx(timevec_to_fit, fv(:,i),"-r");			% gefittet
+            end;
+          endfor;
+          printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
+          printf ("  In eine / mehrere Grafiken plotten: print_together\n");
+          hold off;
+          legend("SVD","globalfit");
 
-	elseif (print_bspec_only==1)
-		printf("  Bspec Plot\n");
-		hold off;
-		clf;
-		for i=1:components
-			color_text = sprintf("-%d",i);
-			plot(freqvec,uu(:,k_order(i)),color_text);
-			legend_text_a{i} = sprintf("bspec nr. %d; k=%f", i, KMatrix(k_order(i)));
-			hold on;
-		endfor;
-		legend(legend_text_a);
-		flipx();
-		%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
-	elseif (print_kin_only==1)
-		printf("  Kin Plot\n");
-		hold off;
-		for i=1:components
-			if ( LOG_KINETICS == 0 )
-				plot(timevec, kineticfun(:,k_order(i)));
-				plot(timevec_to_fit,vv(:,k_order(i)));
-			else
-				semilogx(timevec, kineticfun(:,k_order(i)));
-				semilogx(timevec_to_fit,vv(:,k_order(i)));
-			endif;
-			legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
-			legend("data",legend_text);
-			printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
-			printf ("  In eine / mehrere Grafiken plotten: print_together\n");
-			printf("  k_%d = %f (tau_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
-			hold on;
-		endfor;
-	else
-		subplot(1,2,1);
-		hold off;
-		for i=1:components
-			plot(freqvec,uu(:,k_order(i)));
-			hold on;
-			flipx();
-			%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
-		end;
-		subplot(1,2,2);
-		hold off;
-		for i=1:components
-			if ( LOG_KINETICS == 0 )
-				plot(timevec, kineticfun(:,k_order(i)));
-				plot(timevec_to_fit,vv(:,k_order(i)));
-			else
-				semilogx(timevec, kineticfun(:,k_order(i)));
-				semilogx(timevec_to_fit,vv(:,k_order(i)));
-			end;
-			legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
-			legend("data",legend_text);
-			printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
-			printf ("  In eine / mehrere Grafiken plotten: print_together\n");
-			printf("  k_%d = %f (tau_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
-			hold on;
-		end;
-	end;
+        elseif (print_bspec_only==1)
+          printf("  Bspec Plot\n");
+          hold off;
+          clf;
+          for i=1:components
+            color_text = sprintf("-%d",i);
+            plot(freqvec,uu(:,k_order(i)),color_text);
+            legend_text_a{i} = sprintf("bspec nr. %d; k=%f", i, KMatrix(k_order(i)));
+            hold on;
+          endfor;
+          legend(legend_text_a);
+          flipx();
+          %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
+        elseif (print_kin_only==1)
+          printf("  Kin Plot\n");
+          hold off;
+          for i=1:components
+            if ( LOG_KINETICS == 0 )
+              plot(timevec, kineticfun(:,k_order(i)));
+              plot(timevec_to_fit,vv(:,k_order(i)));
+            else
+              semilogx(timevec, kineticfun(:,k_order(i)));
+              semilogx(timevec_to_fit,vv(:,k_order(i)));
+            endif;
+            legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
+            legend("data",legend_text);
+            printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
+            printf ("  In eine / mehrere Grafiken plotten: print_together\n");
+            printf("  k_%d = %f (tau_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
+            hold on;
+          endfor;
+        else
+          subplot(1,2,1);
+          hold off;
+          for i=1:components
+            plot(freqvec,uu(:,k_order(i)));
+            hold on;
+            flipx();
+            %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca(),"XDir","reverse"); end;
+          end;
+          subplot(1,2,2);
+          hold off;
+          for i=1:components
+            if ( LOG_KINETICS == 0 )
+              plot(timevec, kineticfun(:,k_order(i)));
+              plot(timevec_to_fit,vv(:,k_order(i)));
+            else
+              semilogx(timevec, kineticfun(:,k_order(i)));
+              semilogx(timevec_to_fit,vv(:,k_order(i)));
+            end;
+            legend_text = sprintf("k_%d = %f",i, KMatrix(k_order(i)));
+            legend("data",legend_text);
+            printf ("  Logarithmische t-Achse aus/einstellen: LOG_KINETICS\n");
+            printf ("  In eine / mehrere Grafiken plotten: print_together\n");
+            printf("  k_%d = %f (tau_%d = %f)\n", i, KMatrix(k_order(i)), i, 1/KMatrix(k_order(i)));
+            hold on;
+          end;
+        end;
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%	    		</plot globalfit>
-	elseif ( strcmp(substring(eingaben,2),"pretime" ) )
-		fig(FIG);
-		hold off;
-		subplot(1,1,1);
-		PRE_INDEX = time_get_index(PRE_TIME, timevec);
-		START_PRE_INDEX = PRE_INDEX - 4;
-		STOP_PRE_INDEX = PRE_INDEX + 4;
-		if (START_PRE_INDEX < 1), START_PRE_INDEX = 1; end;
-			offset = 0;
-			printf("	Zeit		Index\n");
-		for i=START_PRE_INDEX:STOP_PRE_INDEX
-			printf("	%f	%d\n", timevec(i), i);
-			preplotvec(:, i-START_PRE_INDEX+1) = mdata(:,i) - offset;
-			prelegend{i-START_PRE_INDEX+1} = sprintf("%d.: %d (%f)", i-START_PRE_INDEX+1, i, timevec(i));
-			%plot(freqvec, mdata(:, i) - offset);
-			%hold on;
-			offset = offset + abs(min(mdata(:,i)));
-			if (i<STOP_PRE_INDEX), offset = offset + abs(max(mdata(:,i+1))); end;
-		endfor;
-		plot(freqvec, preplotvec);
-		legend(prelegend);
-		clear preplotvec;
-		clear prelegend;
+      elseif ( strcmp(substring(eingaben,2),"pretime" ) )
+        fig(FIG);
+        hold off;
+        subplot(1,1,1);
+        PRE_INDEX = time_get_index(PRE_TIME, timevec);
+        START_PRE_INDEX = PRE_INDEX - 4;
+        STOP_PRE_INDEX = PRE_INDEX + 4;
+        if (START_PRE_INDEX < 1), START_PRE_INDEX = 1; end;
+          offset = 0;
+          printf("	Zeit		Index\n");
+        for i=START_PRE_INDEX:STOP_PRE_INDEX
+          printf("	%f	%d\n", timevec(i), i);
+          preplotvec(:, i-START_PRE_INDEX+1) = mdata(:,i) - offset;
+          prelegend{i-START_PRE_INDEX+1} = sprintf("%d.: %d (%f)", i-START_PRE_INDEX+1, i, timevec(i));
+          %plot(freqvec, mdata(:, i) - offset);
+          %hold on;
+          offset = offset + abs(min(mdata(:,i)));
+          if (i<STOP_PRE_INDEX), offset = offset + abs(max(mdata(:,i+1))); end;
+        endfor;
+        plot(freqvec, preplotvec);
+        legend(prelegend);
+        clear preplotvec;
+        clear prelegend;
 
-	elseif ( substring(eingaben,2) == "u" )					# SVD:      	U
-		if (AUTO_FIGURE==1), fig(FIG_U); endif;
-		if (eing_num==3)
-			bis = str2num(substring(eingaben,3));
-		else
-			bis=input("  Plottet Matrix U 1-");
-		endif;
-		uplot=u(:,von:bis);
-		for i=2:bis
-			uplot(:,i) = uplot(:,i) - abs(min(uplot(:,i-1))) - abs(max(uplot(:,i)));
-		endfor;
-		xlabel(wavenumber_axis);
-		ylabel(intensity_axis);
-		hold off;
-		for i=1:columns(uplot)
-			plot_label = sprintf("-;Base %d;%d",i,mod(i,5));
-			plot(freqvec, uplot(:,i), plot_label);
-			if (i==1)
-				hold on;
-			endif;
-		endfor;
-		%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set (gca,"XDir","reverse"); end;
-		flipx();
-		xlabel(wavenumber_axis);
-		ylabel(intensity_axis);
-		hold off;
-        #plot(freqvec,uplot(:,:));
+      elseif ( substring(eingaben,2) == "u" )					# SVD:      	U
+        if (AUTO_FIGURE==1), fig(FIG_U); endif;
+        if (eing_num==3)
+          bis = str2num(substring(eingaben,3));
+        else
+          bis=input("  Plottet Matrix U 1-");
+        endif;
+        uplot=u(:,von:bis);
+        for i=2:bis
+          uplot(:,i) = uplot(:,i) - abs(min(uplot(:,i-1))) - abs(max(uplot(:,i)));
+        endfor;
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        hold off;
+        for i=1:columns(uplot)
+          plot_label = sprintf("-;Base %d;%d",i,mod(i,5));
+          plot(freqvec, uplot(:,i), plot_label);
+          if (i==1)
+            hold on;
+          endif;
+        endfor;
+        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set (gca,"XDir","reverse"); end;
+        flipx();
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        hold off;
+            #plot(freqvec,uplot(:,:));
       %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
       %
       %		Rotierte Matrix plotten
-	elseif ( strcmp(substring(eingaben,2),"r"))
-	    fig(FIG_SVD);
-	    clf();
-	    if ( eing_num == 3 )
-        vals_to_plot = str2num(substring(eingaben,3));
-      else
-        vals_to_plot = 5;
-      endif
-	    printf("  vals_to_plot=%d\n", vals_to_plot);
-	    for komponente=1:vals_to_plot
-        subplot(vals_to_plot,2,komponente*2-1);
-        plot(freqvec, u_rot(:,komponente));
-        subplot(vals_to_plot,2,komponente*2);
-        if ( LOG_KINETICS==0)
-          plot(timevec, v_rot(:,komponente));
-        else
-          semilogx(timevec, v_rot(:,komponente));
-        endif;
-	    endfor
-      S  = axes( 'visible', 'off', 'title', 'rotated' );
+      elseif ( strcmp(substring(eingaben,2),"r"))
+          fig(FIG_SVD);
+          clf();
+          if ( eing_num == 3 )
+            vals_to_plot = str2num(substring(eingaben,3));
+          else
+            vals_to_plot = 5;
+          endif
+          printf("  vals_to_plot=%d\n", vals_to_plot);
+          for komponente=1:vals_to_plot
+            subplot(vals_to_plot,2,komponente*2-1);
+            plot(freqvec, u_rot(:,komponente));
+            subplot(vals_to_plot,2,komponente*2);
+            if ( LOG_KINETICS==0)
+              plot(timevec, v_rot(:,komponente));
+            else
+              semilogx(timevec, v_rot(:,komponente));
+            endif;
+          endfor
+          S  = axes( 'visible', 'off', 'title', 'rotated' );
 
-	elseif ( strcmp(substring(eingaben,2),"rot" ) )
-	    printf("  Info: \" plot r\" zum Plotten nur der rotierten Matrix verwenden!\n");
-	    fig(FIG_SVD);
-	    clf();
-	    if ( eing_num == 3 )
-			  vals_to_plot = str2num(substring(eingaben,3));
-      else
-        vals_to_plot = 5;
-      endif;
-	    printf("  vals_to_plot=%d\n", vals_to_plot);
-	    for komponente=1:vals_to_plot
-        subplot(vals_to_plot,2,komponente*2-1);
-        plot(freqvec, u_alt(:,komponente), freqvec, u_rot(:,komponente));
-        legend('original','rotated');
-        subplot(vals_to_plot,2,komponente*2);
-        if ( LOG_KINETICS==0)
-          plot(timevec, v(:,komponente), timevec, v_rot(:,komponente));
-        else
-          semilogx(timevec, v(:,komponente), timevec, v_rot(:,komponente));
-        endif;
-	    end
-      legend('original','rotated', 'location', 'southeast');
-	    % Baustelle: wenn grace eingestellt ist, hier kurzzeitig auf gnuplot umstellen!
-	    if (PLOT_ROT_HISTOGRAMS==1)
-        if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
-        fig(FIG_AUTOCORR);
-        clf();
-        subplot (2,2,1);
-        plotvec=zeros(1,vals_to_plot);
-        for i=1:autocorr_to_plot
-          plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
-        endfor;
-        bar (plotvec');
-        title("Autocorrelation of U (orig)");
-        xlabel('component number');
-        ylabel('value');
-        subplot (2,2,2);
-        plotvec=zeros(1,vals_to_plot);
-        for i=1:autocorr_to_plot
-          plotvec(i,:) = svd_autocorr(u_rot, vals_to_plot, i);
-        endfor;
-        bar (plotvec');
-        title("Autocorrelation of U (rot)");
-        xlabel('component number');
-        ylabel('value');
-        subplot (2,2,3);
-        plotvec=zeros(1,vals_to_plot);
-        for i=1:autocorr_to_plot
-          plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
-        endfor;
-        bar (plotvec');
-        title("Autocorrelation of V (orig)");
-        xlabel('component number');
-        ylabel('value');
-        subplot (2,2,4);
-        plotvec=zeros(1,vals_to_plot);
-        for i=1:autocorr_to_plot
-          plotvec(i,:) = svd_autocorr(v_rot, vals_to_plot,i );
-        endfor;
-        bar (plotvec');
-        title("Autocorrelation of V (rot)");
-        xlabel('component number');
-        ylabel('value');
-        if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
-	    else
-			  printf("  Hinweis: Histogrammansicht kann mit PLOT_ROT_HISTOGRAMS=1 eingeschaltet werden.\n");
-	    end;
-	    printf("  Bearbeitete Daten in u_rot, v_rot ( mdata = u_rot (v_rot)T )\n");
+      elseif ( strcmp(substring(eingaben,2),"rot" ) )
+          printf("  Info: \" plot r\" zum Plotten nur der rotierten Matrix verwenden!\n");
+          fig(FIG_SVD);
+          clf();
+          if ( eing_num == 3 )
+            vals_to_plot = str2num(substring(eingaben,3));
+          else
+            vals_to_plot = 5;
+          endif;
+          printf("  vals_to_plot=%d\n", vals_to_plot);
+          for komponente=1:vals_to_plot
+            subplot(vals_to_plot,2,komponente*2-1);
+            plot(freqvec, u_alt(:,komponente), freqvec, u_rot(:,komponente));
+            legend('original','rotated');
+            subplot(vals_to_plot,2,komponente*2);
+            if ( LOG_KINETICS==0)
+              plot(timevec, v(:,komponente), timevec, v_rot(:,komponente));
+            else
+              semilogx(timevec, v(:,komponente), timevec, v_rot(:,komponente));
+            endif;
+          end
+          legend('original','rotated', 'location', 'southeast');
+          % Baustelle: wenn grace eingestellt ist, hier kurzzeitig auf gnuplot umstellen!
+          if (PLOT_ROT_HISTOGRAMS==1)
+            if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
+            fig(FIG_AUTOCORR);
+            clf();
+            subplot (2,2,1);
+            plotvec=zeros(1,vals_to_plot);
+            for i=1:autocorr_to_plot
+              plotvec(i,:) = svd_autocorr(u, vals_to_plot, i);
+            endfor;
+            bar (plotvec');
+            title("Autocorrelation of U (orig)");
+            xlabel('component number');
+            ylabel('value');
+            subplot (2,2,2);
+            plotvec=zeros(1,vals_to_plot);
+            for i=1:autocorr_to_plot
+              plotvec(i,:) = svd_autocorr(u_rot, vals_to_plot, i);
+            endfor;
+            bar (plotvec');
+            title("Autocorrelation of U (rot)");
+            xlabel('component number');
+            ylabel('value');
+            subplot (2,2,3);
+            plotvec=zeros(1,vals_to_plot);
+            for i=1:autocorr_to_plot
+              plotvec(i,:) = svd_autocorr(v, vals_to_plot,i );
+            endfor;
+            bar (plotvec');
+            title("Autocorrelation of V (orig)");
+            xlabel('component number');
+            ylabel('value');
+            subplot (2,2,4);
+            plotvec=zeros(1,vals_to_plot);
+            for i=1:autocorr_to_plot
+              plotvec(i,:) = svd_autocorr(v_rot, vals_to_plot,i );
+            endfor;
+            bar (plotvec');
+            title("Autocorrelation of V (rot)");
+            xlabel('component number');
+            ylabel('value');
+            if (strcmp(DEFAULT_PLOTTER,"grace")); toggle_grace_use; endif;
+          else
+            printf("  Hinweis: Histogrammansicht kann mit PLOT_ROT_HISTOGRAMS=1 eingeschaltet werden.\n");
+          end;
+          printf("  Bearbeitete Daten in u_rot, v_rot ( mdata = u_rot (v_rot)T )\n");
 
-      %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    elseif ( strcmp(substring(eingaben,2),"svd" ) )
+          %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+      elseif ( strcmp(substring(eingaben,2),"svd" ) )
         if ( eing_num == 3 )
 	        fig(FIG_SVD);
 	        hold off;
@@ -7090,8 +7234,76 @@ do
           printf("  Dataset loaded to curent position\n");
         endif;
 
+      elseif ( strcmp(substring(eingaben,2),"csv") )   # Paul Fischer: load uvvis data in *.csv-format
+          loaded_files++;
+		      if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
+		        listenname_a{1} = listenname;
+		        timevec_a{1} = timevec;
+		        freqvec_a{1} = freqvec;
+		        mdata_a{1} = mdata;
+            wavenumber_axis_a{1}=wavenumber_axis;
+            time_axis_a{1}=time_axis;
+		        infofield_a{1} = infofield;
+		        startindex_a{1} = 0;								% geht nur, wenn der schon ex.   TODO
+		        printf("  Der Originaldatensatz wurde in #1 gespeichert\n");
+		        number_a = 1;
+		        loaded_files++;
+		      end;
 
-      elseif ( strcmp(substring(eingaben,2),"lab2data") )   # Paul Fischer: Funktion zum Laden der Datens�tze aus Labor 3 in der Gruppe Peter Hamm
+          [fn, fp] = uigetfile("*","Select data file",".","MultiSelect","Off");
+          dummyf=sprintf("%s%s", fp, fn); %construct path string
+          datamatrix=dlmread(dummyf,",");
+
+          freqvec = datamatrix(2:end,1);
+          timevec = datamatrix(1,2:end);
+          mdata = datamatrix(2:end, 2:end);
+
+          filetype_name="#uvvisdata";
+
+			    listenname_a{loaded_files} = dummyf;
+			    infofield_a{loaded_files}.info = dummyf;
+
+          printf("  load *.csv UVVis data.\n");
+          freqvec_a{loaded_files} = freqvec;
+          timevec_a{loaded_files} = timevec;
+          mdata_a{loaded_files} = mdata;
+			    startindex_a{loaded_files}=0;
+          wavenumber_axis_a{loaded_files}="Wellenlänge [nm]";
+          time_axis_a{loaded_files}="Time [min]";
+
+			    printf("  Datensatz %s an Position %d geladen.\n", dummyf, loaded_files);
+
+		      number_o = number_a;
+		      number_a = loaded_files;
+		      freqvec_a{number_o} = freqvec;		% alte Daten sichern
+		      timevec_a{number_o} = timevec;
+		      mdata_a{number_o} = mdata;
+          wavenumber_axis_a{number_o}=wavenumber_axis;
+          time_axis_a{number_o}=time_axis;
+		      listenname_a{number_o} = listenname;
+		      infofield_a{number_o} = infofield;
+		      startindex_a{number_o} = REACTION_START_INDEX;
+		      freqvec = freqvec_a{number_a};		% Neuer Satz zur Bearbeitung
+		      timevec = timevec_a{number_a};
+		      mdata = mdata_a{number_a};
+          wavenumber_axis=wavenumber_axis_a{number_a};     % Fehlerquelle?
+          time_axis=time_axis_a{number_a};
+		      infofield = infofield_a{number_a};
+		      listenname = listenname_a{number_a};
+
+
+          #set reaction start index
+          REACTION_START_INDEX = 1;
+
+		      is_svd = 0;
+		      is_basis = 0;
+		      speichermodus = 0;
+		      is_fit = 0;
+		      PRE_TIME = 0;
+		      base_matrix = 0;
+
+
+      elseif ( strcmp(substring(eingaben,2),"lab2data") )   # Paul Fischer: Funktion zum Laden der Datens�tze aus Labor  2 der Gruppe Hamm
           loaded_files++;
 		      if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
 		        listenname_a{1} = listenname;
@@ -7133,9 +7345,6 @@ do
           time_unit_factor = 10^9;
           delayvec=delayvec/time_unit_factor;
           datamatrix=datamatrix';
-
-
-
 
           filetype_name="#lab2data";
 
@@ -7184,53 +7393,53 @@ do
 
 
       elseif ( strcmp(substring(eingaben,2),"lab3data") )   # Paul Fischer: Funktion zum Laden der Datens�tze aus Labor 3 in der Gruppe Peter Hamm
-          loaded_files++;
-		      if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
-		        listenname_a{1} = listenname;
-		        timevec_a{1} = timevec;
-		        freqvec_a{1} = freqvec;
-		        mdata_a{1} = mdata;
+        loaded_files++;
+          if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
+            listenname_a{1} = listenname;
+            timevec_a{1} = timevec;
+            freqvec_a{1} = freqvec;
+            mdata_a{1} = mdata;
             wavenumber_axis_a{1}=wavenumber_axis;
             time_axis_a{1}=time_axis;
-		        infofield_a{1} = infofield;
-		        startindex_a{1} = 0;								% geht nur, wenn der schon ex.   TODO
-		        printf("  Der Originaldatensatz wurde in #1 gespeichert\n");
-		        number_a = 1;
-		        loaded_files++;
-		      end;
+            infofield_a{1} = infofield;
+            startindex_a{1} = 0;								% geht nur, wenn der schon ex.   TODO
+            printf("  Der Originaldatensatz wurde in #1 gespeichert\n");
+            number_a = 1;
+            loaded_files++;
+          end;
 
           [fn, fp] = uigetfile("*","Select 3d dataset",".","MultiSelect","Off");
 
 
           dummyf=sprintf("%s%s", fp, fn);
-			    listenname_a{loaded_files} = dummyf;
-			    infofield_a{loaded_files}.info = dummyf;
+          listenname_a{loaded_files} = dummyf;
+          infofield_a{loaded_files}.info = dummyf;
 
           printf("  load data lab 3.\n");
-				  [freqvec_a{loaded_files}, timevec_a{loaded_files}, mdata_a{loaded_files}] = read_lab3data(listenname_a{loaded_files});
-			    startindex_a{loaded_files}=0;
+          [freqvec_a{loaded_files}, timevec_a{loaded_files}, mdata_a{loaded_files}] = read_lab3data(listenname_a{loaded_files});
+          startindex_a{loaded_files}=0;
           wavenumber_axis_a{loaded_files}="Wavenumber [1/cm]";
           time_axis_a{loaded_files}="Time [s]";
 
-			    printf("  Datensatz %s an Position %d geladen.\n", dummyf, loaded_files);
+			   printf("  Datensatz %s an Position %d geladen.\n", dummyf, loaded_files);
 
-		      number_o = number_a;
-		      number_a = loaded_files;
-		      freqvec_a{number_o} = freqvec;		% alte Daten sichern
-		      timevec_a{number_o} = timevec;
-		      mdata_a{number_o} = mdata;
+          number_o = number_a;
+          number_a = loaded_files;
+          freqvec_a{number_o} = freqvec;		% alte Daten sichern
+          timevec_a{number_o} = timevec;
+          mdata_a{number_o} = mdata;
           wavenumber_axis_a{number_o}=wavenumber_axis;
           time_axis_a{number_o}=time_axis;
-		      listenname_a{number_o} = listenname;
-		      infofield_a{number_o} = infofield;
-		      startindex_a{number_o} = REACTION_START_INDEX;
-		      freqvec = freqvec_a{number_a};		% Neuer Satz zur Bearbeitung
-		      timevec = timevec_a{number_a};
-		      mdata = mdata_a{number_a};
+          listenname_a{number_o} = listenname;
+          infofield_a{number_o} = infofield;
+          startindex_a{number_o} = REACTION_START_INDEX;
+          freqvec = freqvec_a{number_a};		% Neuer Satz zur Bearbeitung
+          timevec = timevec_a{number_a};
+          mdata = mdata_a{number_a};
           wavenumber_axis=wavenumber_axis_a{number_a};     % Fehlerquelle?
           time_axis=time_axis_a{number_a};
-		      infofield = infofield_a{number_a};
-		      listenname = listenname_a{number_a};
+          infofield = infofield_a{number_a};
+          listenname = listenname_a{number_a};
 
 
           #set reaction start index
@@ -7238,7 +7447,7 @@ do
           REACTION_START_INDEX = floor(-timevec(1)/dt)+1;
 
           %reduce data by apply a logarithmic binning
-          [mdata, timevec] = makeLogBinning (mdata, timevec, REACTION_START_INDEX);
+          #[mdata, timevec] = makeLogBinning (mdata, timevec, REACTION_START_INDEX);
 
 		      is_svd = 0;
 		      is_basis = 0;
@@ -7925,19 +8134,20 @@ do
 	  end;
 
   case {"#" }			% Speicher xxx als Datei bearbeiten
+    printf("number of entries: %d\n", eing_num);
     if ( eing_num == 1)
 	    if ( loaded_files == 0 )
 	        printf("  Keine weiteren Dateien geladen\n");
-    	else
+    	  else
 	        printf("  %d Datensätze geladen:\n");
 	        for i=1:loaded_files
 		        if ( i==number_a )
 			        printf(" *** %d	%s\n", i, infofield_a{i}.info);
 		        else
 			        printf("     %d	%s\n", i, infofield_a{i}.info);
-		        end;
-	        end;
-	    end;
+		        endif;
+	        endfor;
+	    endif;
     else
 	    number_o = number_a;				% alten Datensatz sichern
 	    if ( eing_num==3 )					% Berechnen, welcher Slot geladen wird (# + xxx)
@@ -7960,7 +8170,7 @@ do
 	    elseif (number_a < 1 )
 	      printf("  Bitte Speicherplatz zwischen 1 und %d angeben!\n", loaded_files);
 	      number_a = number_o;
-    	else
+    	  else
 	        %	put();					% Hier nicht sichern, da das ja sowieso passiert...
 	        %                  TODO: REACTION_START_INDEX immer mitf�hren!!!
         if ( substring(eingaben,2)=="dup" )
@@ -7988,9 +8198,9 @@ do
 	        is_fit = 0;
 	        PRE_TIME = 0;
 	        base_matrix = 0;
-        end;
-	    end;
-    end;
+        endif;
+	    endif;
+    endif;
 
  case {"##" }
 							% # Zeigt belegte Plätze an
@@ -8003,9 +8213,9 @@ do
 			    printf(" *** %d	%s\n", i, basename(listenname_a{i}));
 		    else
 			    printf("     %d	%s\n", i, basename(listenname_a{i}));
-		    end;
+		    endif;
 	    end;
-	end
+	endif
 
  case {"###" }
 							% Ausfuehrliche Anzeige
@@ -8014,108 +8224,112 @@ do
 	else
 	    printf("  %d Datensätze geladen:\n");
 	    for i=1:loaded_files
-		if ( i==number_a )
-			printf(" *** %d	%s\n", i, basename(listenname_a{i}));
-		else
-			printf("     %d	%s\n", i, basename(listenname_a{i}));
-		end;
-		printf("     %s\n",infofield_a{i}.info);
+        if ( i==number_a )
+          printf(" *** %d	%s\n", i, basename(listenname_a{i}));
+        else
+          printf("     %d	%s\n", i, basename(listenname_a{i}));
+        end;
+        printf("     %s\n",infofield_a{i}.info);
 	    end;
 	end
+
   case {"#label" }
-	infofield.info=sprintf("%s",substring(eingaben,2));
+	  infofield.info=sprintf("%s",substring(eingaben,2));
   case {"#dup" } 			% den aktuellen Datensatzes duplizieren   Baustelle
-	if ( loaded_files == 0 )			% In Mehrfachmodus umschalten, und den Datensatz sichern
-		printf("  Umschalten in den Mehrfachmodus und Sichern der Daten auf Platz # 1\n");
-	end;
-	loaded_files++;
-	listenname_a{loaded_files} = listenname;
-	timevec_a{loaded_files} = timevec;
-	freqvec_a{loaded_files} = freqvec;
-  time_axis_a{loaded_files}=time_axis;
-  wavenumber_axis_a{loaded_files}=wavenumber_axis;
-	mdata_a{loaded_files} = mdata;
-	startindex_a{loaded_files} = REACTION_START_INDEX;
-	infofield_a{loaded_files}.info = sprintf("Copy_of_%s_made_at_step_%d\n", listenname, command_position);
-	printf("  Der Originaldatensatz wurde in # %d gespeichert\n", loaded_files);
-	if ( loaded_files == 1 )
-		number_a = 1;
-	end;
+    if ( loaded_files == 0 )			% In Mehrfachmodus umschalten, und den Datensatz sichern
+      printf("  Umschalten in den Mehrfachmodus und Sichern der Daten auf Platz # 1\n");
+    end;
+    loaded_files++;
+    listenname_a{loaded_files} = listenname;
+    timevec_a{loaded_files} = timevec;
+    freqvec_a{loaded_files} = freqvec;
+    time_axis_a{loaded_files}=time_axis;
+    wavenumber_axis_a{loaded_files}=wavenumber_axis;
+    mdata_a{loaded_files} = mdata;
+    startindex_a{loaded_files} = REACTION_START_INDEX;
+    infofield_a{loaded_files}.info = sprintf("Copy_of_%s_made_at_step_%d\n", listenname, command_position);
+    printf("  Der Originaldatensatz wurde in # %d gespeichert\n", loaded_files);
+    if ( loaded_files == 1 )
+      number_a = 1;
+    end;
+
   case {"#div" }
-	if (eing_num==1)
-		printf("  Usage: #div <n>\n  devides the actual by the given dataset\n");
-	else
-		devnum = str2num(substring(eingaben,2));
-		if ( (length(freqvec)==sum(freqvec==freqvec_a{devnum})) && (length(timevec)==sum(timevec==timevec_a{devnum})) )
-			mdata = mdata./mdata_a{devnum};
-		else
-			printf("  Error: datasets are incompatible. Try time_resample or wave_resample\n");
-		endif
-	endif
+    if (eing_num==1)
+      printf("  Usage: #div <n>\n  devides the actual by the given dataset\n");
+    else
+      devnum = str2num(substring(eingaben,2));
+      if ( (length(freqvec)==sum(freqvec==freqvec_a{devnum})) && (length(timevec)==sum(timevec==timevec_a{devnum})) )
+        mdata = mdata./mdata_a{devnum};
+      else
+        printf("  Error: datasets are incompatible. Try time_resample or wave_resample\n");
+      endif
+    endif
+
   case {"#adapt_to" }		% 2D Interpoplation zum Kompatibel machen
-	if (eing_num==1)
-		printf("  Usage: #adapt_to <nr>			Interpolates the current dataset to fit <nr>\n");
-		printf("					If the original dataset is larger, last values are retained\n");
-	else
-		put();
-		ref_set = str2num(substring(eingaben,2));
-		printf("  Reference Set:\n");
-		printf("	Frequencies: Min: %f; Max: %f; Vals: %d\n", min(freqvec_a{ref_set}),max(freqvec_a{ref_set}),length(freqvec_a{ref_set}));
-		printf("	Time:	Min: Min: %f; Max: %f; Vals: %d\n", min(timevec_a{ref_set}),max(timevec_a{ref_set}),length(timevec_a{ref_set}));
-		printf("  Current Set:\n");
-		printf("	Frequencies: Min: %f; Max: %f; Vals: %d\n", min(freqvec),max(freqvec),length(freqvec));
-		printf("	Time:	Min: Min: %f; Max: %f; Vals: %d\n", min(timevec),max(timevec),length(timevec));
-		if ( (min(freqvec) > min(freqvec_a{ref_set})) || (max(freqvec) < max(freqvec_a{ref_set})) )
-			printf("  Warning: frequency axis will be extrapolated\n");
-			printf("  Extrapolated Values are set to 0. Correct manually!\n");
-		endif;
-		if ( (min(timevec) > min(timevec_a{ref_set})) || (max(timevec) < max(timevec_a{ref_set})) )
-			printf("  Warning: time axis will be extrapolated\n");
-			printf("  Extrapolated Values are set to 0. Correct manually!\n")
-		endif;
-		[fvt, tvt, mdt] = wave_resample(freqvec, timevec, mdata, freqvec_a{ref_set});
-		[freqvec, timevec, mdata] = time_resample(fvt, tvt, mdt, timevec_a{ref_set});
-		clear fvt;
-		clear tvt;
-		clear mdt;
-	endif
+    if (eing_num==1)
+      printf("  Usage: #adapt_to <nr>			Interpolates the current dataset to fit <nr>\n");
+      printf("					If the original dataset is larger, last values are retained\n");
+    else
+      put();
+      ref_set = str2num(substring(eingaben,2));
+      printf("  Reference Set:\n");
+      printf("	Frequencies: Min: %f; Max: %f; Vals: %d\n", min(freqvec_a{ref_set}),max(freqvec_a{ref_set}),length(freqvec_a{ref_set}));
+      printf("	Time:	Min: Min: %f; Max: %f; Vals: %d\n", min(timevec_a{ref_set}),max(timevec_a{ref_set}),length(timevec_a{ref_set}));
+      printf("  Current Set:\n");
+      printf("	Frequencies: Min: %f; Max: %f; Vals: %d\n", min(freqvec),max(freqvec),length(freqvec));
+      printf("	Time:	Min: Min: %f; Max: %f; Vals: %d\n", min(timevec),max(timevec),length(timevec));
+      if ( (min(freqvec) > min(freqvec_a{ref_set})) || (max(freqvec) < max(freqvec_a{ref_set})) )
+        printf("  Warning: frequency axis will be extrapolated\n");
+        printf("  Extrapolated Values are set to 0. Correct manually!\n");
+      endif;
+      if ( (min(timevec) > min(timevec_a{ref_set})) || (max(timevec) < max(timevec_a{ref_set})) )
+        printf("  Warning: time axis will be extrapolated\n");
+        printf("  Extrapolated Values are set to 0. Correct manually!\n")
+      endif;
+      [fvt, tvt, mdt] = wave_resample(freqvec, timevec, mdata, freqvec_a{ref_set});
+      [freqvec, timevec, mdata] = time_resample(fvt, tvt, mdt, timevec_a{ref_set});
+      clear fvt;
+      clear tvt;
+      clear mdt;
+    endif
+
   case {"split" }
-	if (eing_num==1)
-		printf("  Benutzung: split <time>\n  Den Datensatz zum geg. Zeitpunkt auftrennen\n");
-	elseif ( ( str2num(substring(eingaben,2))<timevec(1) ) || ( str2num(substring(eingaben,2))>timevec(length(timevec) ) ) )
-		printf("  Bitte einen Wert zwischen %f und %f angeben!\n", timevec(1), timevec(length(timevec)));
-	else
-		% Baustelle
-		% erzeugt 2 neue Files; an der angegebenen Position wird die aktuelle Datei aufgespaltet
-		time_split = str2num(substring(eingaben,2));
-		time_split_index = time_get_index(time_split, timevec);
-		% Die beiden Teile Speichern
-		loaded_files++;
-		if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
-		    listenname_a{1} = listenname;
-		    timevec_a{1} = timevec;
-		    freqvec_a{1} = freqvec;
-		    mdata_a{1} = mdata;
-		    infofield_a{1} = infofield;
-		    printf("  Der Originaldatensatz wurde in #1 gespeichert\n");
-		    number_a = 1;
-		    loaded_files++;
-		end;
+    if (eing_num==1)
+      printf("  Benutzung: split <time>\n  Den Datensatz zum geg. Zeitpunkt auftrennen\n");
+    elseif ( ( str2num(substring(eingaben,2))<timevec(1) ) || ( str2num(substring(eingaben,2))>timevec(length(timevec) ) ) )
+      printf("  Bitte einen Wert zwischen %f und %f angeben!\n", timevec(1), timevec(length(timevec)));
+    else
+      % Baustelle
+      % erzeugt 2 neue Files; an der angegebenen Position wird die aktuelle Datei aufgespaltet
+      time_split = str2num(substring(eingaben,2));
+      time_split_index = time_get_index(time_split, timevec);
+      % Die beiden Teile Speichern
+      loaded_files++;
+      if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
+          listenname_a{1} = listenname;
+          timevec_a{1} = timevec;
+          freqvec_a{1} = freqvec;
+          mdata_a{1} = mdata;
+          infofield_a{1} = infofield;
+          printf("  Der Originaldatensatz wurde in #1 gespeichert\n");
+          number_a = 1;
+          loaded_files++;
+      end;
 
-		listenname_a{loaded_files} = sprintf("%s_part1", listenname);
-		freqvec_a{loaded_files} = freqvec;
-		timevec_a{loaded_files} = timevec(1:time_split_index);
-		mdata_a{loaded_files} = mdata(:, 1:time_split_index);
-		infofield_a{loaded_files} = infofield;							% TODO: make a better name!
-		loaded_files++;
-		listenname_a{loaded_files} = sprintf("%s_part2", listenname);
-		freqvec_a{loaded_files} = freqvec;
-		timevec_a{loaded_files} = timevec(time_split_index+1:end);
-		mdata_a{loaded_files} = mdata(:, time_split_index+1:end);
-		infofield_a{loaded_files} = infofield;
-		printf("  Datensatz aufgeteilt. <#> zum Anzeigen.\n");
+      listenname_a{loaded_files} = sprintf("%s_part1", listenname);
+      freqvec_a{loaded_files} = freqvec;
+      timevec_a{loaded_files} = timevec(1:time_split_index);
+      mdata_a{loaded_files} = mdata(:, 1:time_split_index);
+      infofield_a{loaded_files} = infofield;							% TODO: make a better name!
+      loaded_files++;
+      listenname_a{loaded_files} = sprintf("%s_part2", listenname);
+      freqvec_a{loaded_files} = freqvec;
+      timevec_a{loaded_files} = timevec(time_split_index+1:end);
+      mdata_a{loaded_files} = mdata(:, time_split_index+1:end);
+      infofield_a{loaded_files} = infofield;
+      printf("  Datensatz aufgeteilt. <#> zum Anzeigen.\n");
 
-	end;
+    end;
 
   case {"join" }					% Baustelle
     if (eing_num<3 )							% TODO: "interaktiver" Modus
@@ -8166,6 +8380,8 @@ do
     else
       js1 = str2num(substring(eingaben,2));
       js2 = str2num(substring(eingaben,3));
+      time1=timevec_a{js1};
+      time2=timevec_a{js2};
 
       if (eing_num==4)
         weight1 = str2num(substring(eingaben,4));
@@ -8178,25 +8394,39 @@ do
         weight2 = 1;
       endif
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
-      if ( min(timevec_a{js1}) <= min(timevec_a{js2}) && max(timevec_a{js1}) >= max(timevec_a{js2}))
+      if ( min(time1) <= min(time2) && max(time1) >= max(time2))
         # make joined freqvec
         freq1 = freqvec_a{js1};
         if ((max(freqvec_a{js1}) < max(freqvec_a{js2})) && (min(freqvec_a{js1}) > min(freqvec_a{js2})))
           printf("Data set 2 is complete subset of set 1. Joining is not necessary. Use average <av> instead.");
-        elseif (max(freqvec_a{js1}) < max(freqvec_a{js2}))
+        elseif (max(freqvec_a{js1}) <= max(freqvec_a{js2}))
           freq2_sidx = get_index(max(freqvec_a{js1}), freqvec_a{js2});
           freq2 = freqvec_a{js2}(freq2_sidx+1:end);
           joined_freq = [freq1; freq2];
-        elseif (min(freqvec_a{js1}) > min(freqvec_a{js2}))
+        elseif (min(freqvec_a{js1}) >= min(freqvec_a{js2}))
           freq2_eidx = get_index(min(freqvec_a{js1}), freqvec_a{js2});
           freq2 = freqvec_a{js2}(1:freq2_eidx-1);
           joined_freq = [freq2; freq1];
         endif
 
+        # make time compatible
+        printf("  Warning: dataset %d will be cropped in time to match %d\n", js1, js2);
+        t1_idx_low = time_get_index(min(time2), time1);
+        t1_idx_high = time_get_index(max(time2), time2);
+
+        time1_overlapp =  time1(t1_idx_low:t1_idx_high);
+
+        mdata1 = mdata_a{js1};
+        mdata2 = mdata_a{js2};
+
+        mdata1_overlapp = mdata1(:, t1_idx_low:t1_idx_high);
+        mdata2_overlapp_comp = interp1(time2, mdata2', time1_overlapp,"extrap");
+
+
         loaded_files++;
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(timevec_a{js1}, freqvec_a{js1}, mdata_a{js1}, weight1,
-                                      timevec_a{js2}, freqvec_a{js2}, mdata_a{js2}, weight2, joined_freq);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1_overlapp, freqvec_a{js1}, mdata1_overlapp, weight1,
+                                      time2, freqvec_a{js2}, mdata2_overlapp_comp, weight2, joined_freq);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
@@ -8210,12 +8440,12 @@ do
         printf("sets cannot be joined. Time vector of set 2 must be a subset of set 1. Cut time of set 2 and try again.\n")
       endif;
     endif;
-    
+
   case {"jointime"}
     if (eing_num<3 )							% PF
       printf("  Usage: join_time <#1> <#2> [w1 | w2]\n");
       printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
-    else     
+    else
       joinable = 1;
       js1 = str2num(substring(eingaben,2));
       js2 = str2num(substring(eingaben,3));
@@ -8230,77 +8460,77 @@ do
         weight1 = 1;
         weight2 = 1;
       endif
-      
+
       # make freqvecs compatible
-      freq1 = freqvec_a{1};
-      freq2 = freqvec_a{2};      
-      mdata1 = mdata_a{1};
-      mdata2 = mdata_a{2};
-      
+      freq1 = freqvec_a{js1};
+      freq2 = freqvec_a{js2};
+      mdata1 = mdata_a{js1};
+      mdata2 = mdata_a{js2};
+
       if ( min(freq1) <= min(freq2) && max(freq1) >= max(freq2))    # Set 2 complete subset of 1
         printf("  Frequency vectors will be made compatibe using linear interpolation.");
         # make joined freqvec
         len1 = length(freq1);
         len2 = length(freq2);
-        
+
         if len2 > len1
           mdata1 = interp1(freq1, mdata1, freq2, "extrap");
           freq = freq2;
-        else  
+        else
           mdata2 = interp1(freq2, mdata2, freq1, "extrap");
           freq = freq1;
         endif
-        
+
       elseif ( min(freq1) <= min(freq2) && max(freq1) <= max(freq2) && max(freq1) >= min(freq2))    # Set 1 lower than 2 with overlap
         overlap_idx1 = get_index(min(freq2), freq1);
         overlap_idx2 = get_index(max(freq1), freq2);
         freq1_overlap = freq1(overlap_idx1:end);
         freq2_overlap = freq1(1:overlap_idx2);
-        
+
         len1 = length(freq1_overlap);
         len2 = length(freq2_overlap);
-        
+
         if len2 > len1
           mdata1 = interp1(freq1_overlap, mdata1(overlap_idx1:end,:), freq2_overlap, "extrap");
           mdata2 = mdata2(1:overlap_idx2);
           freq = freq2_overlap;
-        else  
+        else
           mdata1 = mdata1(overlap_idx1:end,:);
           mdata2 = interp1(freq2_overlap, mdata2(1:overlap_idx2,:), freq1_overlap, "extrap");
           freq = freq1_overlap;
         endif
-        
-      elseif ( min(freq2) <= min(freq1) && max(freq2) <= max(freq1) && max(freq2) >= min(freq1))    # Set 2 lower than 1 with overlap   
+
+      elseif ( min(freq2) <= min(freq1) && max(freq2) <= max(freq1) && max(freq2) >= min(freq1))    # Set 2 lower than 1 with overlap
         overlap_idx1 = get_index(max(freq2), freq1);
         overlap_idx2 = get_index(min(freq1), freq2);
         freq1_overlap = freq1(1:overlap_idx1);
         freq2_overlap = freq1(overlap_idx2:end);
-        
+
         len1 = length(freq1_overlap);
         len2 = length(freq2_overlap);
-        
+
         if len2 > len1
           mdata1 = interp1(freq1_overlap, mdata1(1:overlap_idx1,:), freq2_overlap, "extrap");
           mdata2 = mdata2(overlap_idx2:end);
           freq = freq2_overlap;
-        else  
+        else
           mdata1 = mdata1(1:overlap_idx1,:);
           mdata2 = interp1(freq2_overlap, mdata2(overlap_idx2:end,:), freq1_overlap, "extrap");
           freq = freq1_overlap;
         endif
 
-        
+
       else
         printf("  Sets cannot be joined. Frequency vectors must have an overlap.\n")
         joinable = 0;
       endif;
-      
+
       if joinable
          # make joined timevec
         time1 = timevec_a{js1};
         time2 = timevec_a{js2};
-        
-      
+
+
         loaded_files++;
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
         [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq);
@@ -8313,10 +8543,10 @@ do
         if ( loaded_files == 1 )
           number_a = 1;
         end;
-      endif  
-  
-      
-    endif    
+      endif
+
+
+    endif
 
 
   case {"inc_ratio" }
