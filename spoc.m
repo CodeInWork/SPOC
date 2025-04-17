@@ -298,20 +298,27 @@ print_bspec_only = 0;
 print_kin_only = 0;
 
 
+
+# Calibration data for calibrating frequency axis
+# 1. Value: current freq value (Is)
+# 2. Value: desired freq value (Should)
+
+cal=  [1599,   1636,
+  1582,   1617,
+  1630,   1617,
+  1640,   1630];
+
+
 %
 % Stützstellen fuer BL-Korrektur
 %
 % Format:	Start Ende Wert
 %
-% Automatische Berechnung: 1. Wert ein/aus
-%                                                      2. Wert Anzahl der St�tzstellen
+% Automatische Berechnung: 1. Wert: on/off
+%                          2. Wert: number of nodes
 %
 
-cal=  [1507, 1515,
-  1519,   1528,
-  1530,   1556,
-  1630,   1617,
-  1640,   1630];
+
 
 is = [1506, 1517, 1541, 1556, 1633, 1640];
 should = [1514, 1527, 1530, 1549, 1617, 1629];
@@ -522,6 +529,13 @@ global BL_SPLINE_BackSubD2O = [1000,	1020,	1010,
 				1693,	1746,	1720,
 				1746,	1797,	1773,
 				1746,	1797,	1797];
+
+global BL_SPLINE_GC = [1094,	1104,	1100,
+        1104,	1124,	1114,
+				1124,	1142,	1130,
+				1142,	1172,	1150,
+				1172,	1186.8,	1180,
+				1176,	1186.8,	1186.8];
 
 global BL_SPLINE_PALD2O = [1591,	1610,	1600,
         1610,	1630,	1620,
@@ -861,11 +875,11 @@ function undo()
       printf("  Nichts rückgängig zu machen.\n");
       PUT_LEVEL = 1;
     else
-	timevec = undo_buffer{PUT_LEVEL}.timevec;
-	freqvec = undo_buffer{PUT_LEVEL}.freqvec;
-	mdata = undo_buffer{PUT_LEVEL}.mdata;
-	REACTION_START_INDEX = undo_buffer{PUT_LEVEL}.reaction_start;
-	printf("Daten aus Ebene %d wiederhergestellt\n", PUT_LEVEL);
+      timevec = undo_buffer{PUT_LEVEL}.timevec;
+      freqvec = undo_buffer{PUT_LEVEL}.freqvec;
+      mdata = undo_buffer{PUT_LEVEL}.mdata;
+      REACTION_START_INDEX = undo_buffer{PUT_LEVEL}.reaction_start;
+      printf("Daten aus Ebene %d wiederhergestellt\n", PUT_LEVEL);
     end;
 end
 
@@ -2222,16 +2236,6 @@ do
       endif;
     endif
 
-%  case {"time_average" }			% Fasst einen bestimmten Bereich des 3D Blocks zusammen
-%  case {"reset_time"))			% Zeitachse immer aufsteigend
-%	time_axis_index_position=timevec(1);
-%	for i=2:length(timevec)
-%		if ( timevec(i) <= time_axis_index_position )
-%			timevec(i) = timevec(i-1) + ( timevec(i-1) - timevec(i-2) );
-%		end;
-%		time_axis_index_position = timevec(i);
-%	end;
-
   case {"reset_time"}			% Zeitachse immer aufsteigend
     time_axis_index_position=timevec(1);		% bei reset_timebase werden alle vorherigen Werte negativ
     one_timestep = 0;						% sollte in read_data integriert werden
@@ -3080,6 +3084,7 @@ do
 		    mdata(:,i)=log(baseline./mdata(:,i));
 	    end
 	    baseline_info=sprintf("Timerange (Extinction) %f - %f", startindex, stopindex);
+
 	  case "fit1"						% 1. Spektrum der Fitmatrix abziehen
 	    put();
 	    baseline=fitdata(:,1);
@@ -4664,7 +4669,7 @@ do
 							% JEDER FIT WIRD FIT_ITERATIONS x durchgeführt,die Beste Variante
     if (eing_num > 2)
       if ( strcmp(substring(eingaben,2),"exp") )
-        F = @fit_monoexponential;			# Die Funktion
+        F = @monoexponential;			# Die Funktion
         pin = [1.0,1.0,1.0];
         fit_info = "y=p(1)+p(2)*(1-exp(-p(3)*x))";	# Startparameter (noch automatisch zuweisen!!)
         printf("  Monoexponentieller Fit");
@@ -6207,21 +6212,35 @@ do
 			end;
 			xlabel(time_axis);
 			ylabel(intensity_axis);
-			elseif ( (eing_num == 3) || length(kin_plot_label)>0)						% nur 1 WL plotten
-			[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
-			printf("  Vec %d (%f)\n", von_index, von_wz);
-			if (length(kin_plot_label)==0)
-				kin_plot_label=sprintf("%s-;%d cm^{-1};", DEFAULT_COLOR, von_wz);
-			else
-				kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
-			end;
-				if ( LOG_KINETICS==0 )
-					plot(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
-				else
-					semilogx(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
-				end;
+
+    elseif ( strcmp(substring(eingaben,3),"all") )          % Ratio plotten
+      subplot(1,1,1);
+      oplot=mdata';
+
+      if ( LOG_KINETICS==0 )
+        plot(timevec,oplot(:,:));
+      else
+        semilogx(timevec,oplot(:,:));
+      endif;
+      xlabel(time_axis);
+      ylabel(intensity_axis);
+
+    elseif ( (eing_num == 3) || length(kin_plot_label)>0)						% nur 1 WL plotten
+      [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
+      printf("  Vec %d (%f)\n", von_index, von_wz);
+      if (length(kin_plot_label)==0)
+        kin_plot_label=sprintf("%s-;%d cm^{-1};", DEFAULT_COLOR, von_wz);
+      else
+        kin_plot_label=sprintf("%s-;%s;", DEFAULT_COLOR, kin_plot_label);
+      end;
+      if ( LOG_KINETICS==0 )
+        plot(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+      else
+        semilogx(timevec, mdata(von_index,:)', kin_plot_label,'linewidth',2);
+      end;
 			xlabel(time_axis);
 			ylabel(intensity_axis);
+
 		elseif ( strcmp(substring(eingaben,3),"r") )          % Ratio plotten
 			[von_index, von_wz] = ir_get_index(str2num(substring(eingaben,4)), freqvec);
 			[von_index1, von_wz1] = ir_get_index(str2num(substring(eingaben,5)), freqvec);
@@ -6757,6 +6776,19 @@ do
 #       Speicherfunktionen
   case {"save" }
     if (eing_num>1)
+      # set save path
+      if (number_a)
+        [folder,name,extension]=fileparts(infofield_a{number_a}.info);
+      else
+        folder = "none";
+      endif
+
+      if (exist(folder)==7) # check if variable folder is a real folder
+        cd(folder);
+        printf("  File will be saved in folder: %s\n", folder);
+      else
+        printf("  File will be saved in folder: %s\n", pwd);
+      endif
 	    if ( strcmp(substring(eingaben,2),"data" ) || strcmp(substring(eingaben,2),"3ddata") )
 	      if ( eing_num > 2 )
 		      if ( strcmp(substring(eingaben,3),"auto") )
@@ -7392,7 +7424,7 @@ do
 
 
 
-      elseif ( strcmp(substring(eingaben,2),"lab3data") )   # Paul Fischer: Funktion zum Laden der Datens�tze aus Labor 3 in der Gruppe Peter Hamm
+      elseif ( strcmp(substring(eingaben,2),"lab3data") )   # Paul Fischer: Funktion zum Laden der Datensätze aus Labor 3 in der Gruppe Peter Hamm
         loaded_files++;
           if (loaded_files == 1)							% Nummer 1 ist immer der Originaldatensatz
             listenname_a{1} = listenname;
@@ -7728,8 +7760,8 @@ do
         nrs=input("","s");
         if (strcmp(nrs,"save"))
           printf("    Dateiname fuer Vektor V[%d]:>", nr);
-	  fname=input("","s");
-	  save_trace(fname,timevec,v(:,nr));
+          fname=input("","s");
+          save_trace(fname,timevec,v(:,nr));
         endif;
       until (!strcmp(nrs,"save"));
       nr = str2num (nrs);
@@ -7740,14 +7772,14 @@ do
           colvec_v(i)=v(i,nr);
         endfor
         plot (timevec, colvec_v);
-	if (speichermodus == 1)
-	  fname=input ("Speichern (Spaltenvektor V)- Dateiname:","s");
-	  sfile = fopen(fname,"a");
-	  for i=1:elements
-	    fprintf(sfile,"%f %f\n", timevec(i), colvec_v(i));
-	  endfor
-	  fclose(sfile);
-	endif;
+      if (speichermodus == 1)
+        fname=input ("Speichern (Spaltenvektor V)- Dateiname:","s");
+        sfile = fopen(fname,"a");
+        for i=1:elements
+          fprintf(sfile,"%f %f\n", timevec(i), colvec_v(i));
+        endfor
+        fclose(sfile);
+      endif;
        elseif
         printf("Spalte ausserhalb des Bereichs (max. %d)!\n", columns(v));
        endif;
@@ -7767,22 +7799,23 @@ do
     else
       printf("  Syntax: print <<Dateiname>>\n");
     endif;
+
   case {"resample" }		# Kompatibel Machen
-	if ( eing_num > 1 )
-	    if ( strcmp(substring(eingaben,2),"base") )
-		for i=1:is_basis
-							# Die Basisspektren in base_matrix(:,i) anpassen
-							# bl_wave ist der Vektor der WZ
-		    work.wavenumbers=bl_wave;
-		    work.intensities=base_matrix(:,i);
-#		    work = spec
-		endfor;
-	    else
-		printf("  Anpassen der Matrix ist derzeit noch nicht möglich\n");
-	    endif;
-	else
-	    printf ("  Welche Daten anpassen: Basisspekten (base) oder Daten (matrix)?\n");
-	endif;
+    if ( eing_num > 1 )
+        if ( strcmp(substring(eingaben,2),"base") )
+      for i=1:is_basis
+                # Die Basisspektren in base_matrix(:,i) anpassen
+                # bl_wave ist der Vektor der WZ
+          work.wavenumbers=bl_wave;
+          work.intensities=base_matrix(:,i);
+  #		    work = spec
+      endfor;
+        else
+      printf("  Anpassen der Matrix ist derzeit noch nicht möglich\n");
+        endif;
+    else
+        printf ("  Welche Daten anpassen: Basisspekten (base) oder Daten (matrix)?\n");
+    endif;
   case {"quit" "exit"}
     ende=1;
 
@@ -7791,8 +7824,10 @@ do
 
   case {"block" }
     printf("\n\n\n");
+
   case {"line" }
     printf("__________________________________________________________________________________\n");
+
   case {"_test" }
     add_to_history("block");
     add_to_history("version");
@@ -7802,278 +7837,290 @@ do
     add_to_history("line");
     add_to_history("version");
     add_to_history("line");
+
   case {"gnuplot" }
     DEFAULT_PLOTTER = "gnuplot";
     if (exist("use_grace_state","var"))
 	    if (strcmp(use_grace_state,"on")) toggle_grace_use ; end;
     end;
+
   case {"grace" }
     if (exist("use_grace_state","var"))
-	if (strcmp(use_grace_state,"off")); toggle_grace_use ; end;
-	if (strcmp(use_grace_state,"on"))
-	    DEFAULT_PLOTTER = "grace";
-	else
-	    DEFAULT_PLOTTER = "gnuplot";
-	    printf("  Fehler beim Initialisieren von Graceplot\n");
-	end;
+      if (strcmp(use_grace_state,"off")); toggle_grace_use ; end;
+      if (strcmp(use_grace_state,"on"))
+          DEFAULT_PLOTTER = "grace";
+      else
+          DEFAULT_PLOTTER = "gnuplot";
+          printf("  Fehler beim Initialisieren von Graceplot\n");
+      end;
     else
-	printf("  Initialisiere Grace\n");
-	toggle_grace_use;
-	if (strcmp(use_grace_state,"on"))
-	    DEFAULT_PLOTTER = "grace";
-	else
-	    DEFAULT_PLOTTER = "gnuplot";
-	    printf("  Fehler beim Initialisieren von Graceplot\n");
-	end;
+      printf("  Initialisiere Grace\n");
+      toggle_grace_use;
+      if (strcmp(use_grace_state,"on"))
+          DEFAULT_PLOTTER = "grace";
+      else
+          DEFAULT_PLOTTER = "gnuplot";
+          printf("  Fehler beim Initialisieren von Graceplot\n");
+      end;
     end;
+
   case {"logx" }
     user_plot=@semilogx;
+
   case {"normx" }
     user_plot=@plot;
+
   case {"version" }
     printf("%s\n",VERSION);
+
   case {"grid" }
     plot3d=@mesh;
+
   case {"surface" }
     plot3d=@surface;
 
   case {"show" }			% Verschiedene Einstellungen anzeigen
-	if ( strcmp(substring(eingaben,2), "time") )
-		printf("  Zeitachse timevec(%d): %f - %f\n", size(timevec), timevec(1), timevec(end));
-		printf("  Einteilung: (DETECTION_LEVEL = %f)\n", DETECTION_LEVEL);
-		steptime = timevec(2)-timevec(1);
-		printf("  dt(1-2) = %f\n", steptime);
-		for i=3:length(timevec);
-			steptimen = timevec(i)-timevec(i-1);
-			if ( ((abs(steptimen-steptime)) * 100 / abs(steptime)) > DETECTION_LEVEL  )
-				printf("  dt(%d - ...) = %f\n", i-1, steptimen);
-				steptime = steptimen;
-			end;
-		end;
-	end;
+    if ( strcmp(substring(eingaben,2), "time") )
+      printf("  Zeitachse timevec(%d): %f - %f\n", size(timevec), timevec(1), timevec(end));
+      printf("  Einteilung: (DETECTION_LEVEL = %f)\n", DETECTION_LEVEL);
+      steptime = timevec(2)-timevec(1);
+      printf("  dt(1-2) = %f\n", steptime);
+      for i=3:length(timevec);
+        steptimen = timevec(i)-timevec(i-1);
+        if ( ((abs(steptimen-steptime)) * 100 / abs(steptime)) > DETECTION_LEVEL  )
+          printf("  dt(%d - ...) = %f\n", i-1, steptimen);
+          steptime = steptimen;
+        end;
+      end;
+    end;
 
   case {"history" }
      for i=1:command_ctr-1
        printf ("  [%d]->  %s\n",i, dhistory(i).name );
      end;
-  case {"macro" }				% Definiert ein einfaches Makro.
-	if (eing_num>=2)
-		if (strcmp(substring(eingaben,2),"define") )
-			if (strcmp(substring(eingaben,5),"-" ) )		% macro define name 7 -10
-			%	mak_nr++;
-			%	macro{mak_nr}.name = substring(eingaben,3);
-				mak_start = str2num(substring(eingaben, 4));
-				mak_stop = str2num(substring(eingaben, 6));
-				mak_nr++;
-				macro{mak_nr}.name = substring(eingaben,3);
-				macro{mak_nr}.nr_commands = mak_stop - mak_start+1;
-				j=1;
-				for i=mak_start:mak_stop
-					macro{mak_nr}.command{j++} = dhistory(i).name;
-				end;
-			else									% macro define name 2 3 4 8 10
-				mak_nr++;
-				macro{mak_nr}.name = substring(eingaben,3);
-				macro{mak_nr}.nr_commands = eing_num - 3;
-				for i=1:eing_num-3
-					macro{mak_nr}.command{i} = dhistory(str2num(substring(eingaben,i+3))).name;
-				end;
-			end;
-		elseif (strcmp(substring(eingaben,2),"list") )
-			if (eing_num==2)
-				for i=1:mak_nr
-					printf("Macro Nr. %d: %s\n", i, macro{i}.name)
-				end;
-			elseif (eing_num==3)
-				i=get_macro_name(substring(eingaben,3));
-				if (i==0)
-					printf("  Syntax: macro list <macro-number>\n");
-					printf("  Please use <macro list> (without argument) to obtain macro-number\n");
-				else
-					printf("  %s:\n",macro{i}.name);
-					for j=1:length(macro{i}.command)
-						printf("    %d.: %s\n",j, macro{i}.command{j});
-					end;
-				end;
-			else
-				printf("  Syntax: macro list [<#nr>]\n");
-			end;
-		elseif (strcmp(substring(eingaben,2),"save"))
-			if (eing_num==3)
-				dummy=sprintf("%s.mak",substring(eingaben,3));
-				save("-binary", dummy, "macro");
-			else
-				printf("  Syntax: macro save <name>\n");
-			end;
-		elseif (strcmp(substring(eingaben,2),"load"))
-			if (eing_num==3)
-				dummy=sprintf("%s.mak",substring(eingaben,3));
-				macrotmp=load(dummy);
-				for i=1:length(macrotmp.macro)
-					mak_nr++;
-					macro{mak_nr}=macrotmp.macro{i};
-				end;
-			else
-				printf("  Syntax: macro load <name>\n");
-			end;
-		elseif (strcmp(substring(eingaben,2),"record"))
-			if (macro_record_start == 0)
-				macro_record_start = command_ctr;
-			else
-				macro_record_stop = command_ctr;
-				printf("  Name des Macro: ");
-				macro_record_name = input(" ","s");
-				mak_nr++;
-				macro{mak_nr}.name = macro_record_name;
-				j=1;
-				for macro_record_i=macro_record_start:macro_record_stop-2
-					macro{mak_nr}.command{j++} = dhistory(macro_record_i).name;
-				end;
-				macro_record_start = 0;
-			end;
-		elseif (strcmp(substring(eingaben,2),"change"))
-			if ( eing_num < 5)
-				printf("  Syntax: macro change <macro_name> <command_num> <command (Text)>\n");
-			else
-				if (get_macro_name(substring(eingaben,3))==0)
-					printf("  Macro ist nicht bekannt\n");
-				else
-					dummy=sprintf("%s", substring(eingaben,5));
-					for (j=6:eing_num)
-						dummy=sprintf("%s %s",dummy,substring(eingaben,j));
-					end;
-					macro{get_macro_num(substring(eingaben,3))}.command{str2num(substring(eingaben,4))}=dummy;
-				end;
-			end;
-		elseif (strcmp(substring(eingaben,2),"delete"))
-			if ( eing_num < 4)
-				printf("  Syntax: macro delete <macro_num> <command_num>\n");
-			else
-				i=get_macro_num(substring(eingaben,4));
-				if (i==0)
-					printf("  Makro unbekannt\n");
-				else
-					if (length(macro{str2num(substring(eingaben,3))}.command)>i)
-						do
-							macro{str2num(substring(eingaben,3))}.command{i}=macro{str2num(substring(eingaben,3))}.command{i+1};
-							i++;
-						until (i>=length(macro{str2num(substring(eingaben,3))}.command));
-					end;
-					macro{str2num(substring(eingaben,3))}.command{i}="nop";
-					end;
-			end;
-		elseif (strcmp(substring(eingaben,2),"insert"))
-			if ( eing_num < 4)
-				printf("  Syntax: macro insert <macro_num> <command_num> <command (Text)>\n");
-			else
-				dummy=sprintf("%s", substring(eingaben,5));
-				for (j=6:eing_num)
-					dummy=sprintf("%s %s",dummy,substring(eingaben,j));
-				end;
-				i=str2num(substring(eingaben,4));
-				j=length(macro{str2num(substring(eingaben,3))}.command);
-				if (j>i)
-					for k=j+1:-1:i
-						macro{str2num(substring(eingaben,3))}.command{k}=macro{str2num(substring(eingaben,3))}.command{k-1};
-					end;
-					macro{str2num(substring(eingaben,3))}.command{i}=dummy;
-				else
-					macro{str2num(substring(eingaben,3))}.command{j+1}=dummy;
-				end;
-			end;
-		else
-			printf(" Macro command unknown\n");
-		end;
-	else
-		printf("  Syntax: macro command <<arguments>>\n");
-		printf("  command may be one of define, list, save, load\n");
-		printf("  Syntax: macro define name #command1 #command2 ...\n");
-		printf("  mrun <<name>> shall be used for executing a macro\n");
-		printf("  mapply uses a macro for several files\n\n");
-		printf("  All macro functions are saved in macro{i}.xxx. The list is reversely executed.\n");
-	end;
-  case{"mrun"}					% Makro ausfuehren. (run name)
-	if ( eing_num == 2 )
-		mak_i = mak_nr+1;
-		do
-			mak_i=mak_i-1;
-		until ( (mak_i==0) || strcmp(macro{mak_i}.name, substring(eingaben,2)) );
-		if (mak_i==0 )
-			printf("  Fehler: Das angegebene Makro ist nicht definiert\n");
-		else
-		        add_to_history("rem START MACRO");
-			for k=1:length(macro{mak_i}.command)
-				add_to_history(macro{mak_i}.command{k});
-				% printf("Will execute: %s\n",macro{i}.command{k});
-			end;
-			add_to_history("rem END MACRO");
-		end;
-	elseif
-		printf("  Name des Makros erforderlich.\n  Syntax: run name\n");
-	end;
-  case {"mapply" }
-	if ( eing_num==2 )
-		i_mak = mak_nr+1;
-		do
-			i_mak=i_mak-1;
-		until ( (i_mak==0) || strcmp(macro{i_mak}.name, substring(eingaben,2)) );
-		if ( i_mak==0 )
-			printf("  Fehler: Das angegebene Makro ist nicht definiert\n");
-		else														% Makro ist da. Dateien laden und ausfuehren
-			%macro_file_list = file_selection("Files to work on","multiple",sprintf("%s/",pwd()));
-      [dummyname, dummypath] = uigetfile("*","Select Files to work on",".","MultiSelect","On")
-      if iscell(dummyname)
-        for im=1:length(dummyname)
-          macro_file_list{im} = sprintf("%s%s",dummypath, dummyname{im});
-        endfor
-      endif
 
-			for i_file=1:length(macro_file_list)
-				dummy = sprintf("load 3ddata %s\n", macro_file_list{i_file});	% Funktioniert so nicht....
-				if ( ispc()==0 ), dummy(length(dummy))=[]; end;
-				add_to_history(dummy);
-				for k=1:length(macro{i_mak}.command)
-					add_to_history(macro{i_mak}.command{k});
-					% printf("Will execute: %s\n",macro{i}.command{k});
-				end;
-			end;
-		end;
-	else
-		printf("  Syntax: mapply <macroname>\n");
-	end;
+  case {"macro" }				% Definiert ein einfaches Makro.
+    if (eing_num>=2)
+      if (strcmp(substring(eingaben,2),"define") )
+        if (strcmp(substring(eingaben,5),"-" ) )		% macro define name 7 -10
+        %	mak_nr++;
+        %	macro{mak_nr}.name = substring(eingaben,3);
+          mak_start = str2num(substring(eingaben, 4));
+          mak_stop = str2num(substring(eingaben, 6));
+          mak_nr++;
+          macro{mak_nr}.name = substring(eingaben,3);
+          macro{mak_nr}.nr_commands = mak_stop - mak_start+1;
+          j=1;
+          for i=mak_start:mak_stop
+            macro{mak_nr}.command{j++} = dhistory(i).name;
+          end;
+        else									% macro define name 2 3 4 8 10
+          mak_nr++;
+          macro{mak_nr}.name = substring(eingaben,3);
+          macro{mak_nr}.nr_commands = eing_num - 3;
+          for i=1:eing_num-3
+            macro{mak_nr}.command{i} = dhistory(str2num(substring(eingaben,i+3))).name;
+          end;
+        end;
+      elseif (strcmp(substring(eingaben,2),"list") )
+        if (eing_num==2)
+          for i=1:mak_nr
+            printf("Macro Nr. %d: %s\n", i, macro{i}.name)
+          end;
+        elseif (eing_num==3)
+          i=get_macro_name(substring(eingaben,3));
+          if (i==0)
+            printf("  Syntax: macro list <macro-number>\n");
+            printf("  Please use <macro list> (without argument) to obtain macro-number\n");
+          else
+            printf("  %s:\n",macro{i}.name);
+            for j=1:length(macro{i}.command)
+              printf("    %d.: %s\n",j, macro{i}.command{j});
+            end;
+          end;
+        else
+          printf("  Syntax: macro list [<#nr>]\n");
+        end;
+      elseif (strcmp(substring(eingaben,2),"save"))
+        if (eing_num==3)
+          dummy=sprintf("%s.mak",substring(eingaben,3));
+          save("-binary", dummy, "macro");
+        else
+          printf("  Syntax: macro save <name>\n");
+        end;
+      elseif (strcmp(substring(eingaben,2),"load"))
+        if (eing_num==3)
+          dummy=sprintf("%s.mak",substring(eingaben,3));
+          macrotmp=load(dummy);
+          for i=1:length(macrotmp.macro)
+            mak_nr++;
+            macro{mak_nr}=macrotmp.macro{i};
+          end;
+        else
+          printf("  Syntax: macro load <name>\n");
+        end;
+      elseif (strcmp(substring(eingaben,2),"record"))
+        if (macro_record_start == 0)
+          macro_record_start = command_ctr;
+        else
+          macro_record_stop = command_ctr;
+          printf("  Name des Macro: ");
+          macro_record_name = input(" ","s");
+          mak_nr++;
+          macro{mak_nr}.name = macro_record_name;
+          j=1;
+          for macro_record_i=macro_record_start:macro_record_stop-2
+            macro{mak_nr}.command{j++} = dhistory(macro_record_i).name;
+          end;
+          macro_record_start = 0;
+        end;
+      elseif (strcmp(substring(eingaben,2),"change"))
+        if ( eing_num < 5)
+          printf("  Syntax: macro change <macro_name> <command_num> <command (Text)>\n");
+        else
+          if (get_macro_name(substring(eingaben,3))==0)
+            printf("  Macro ist nicht bekannt\n");
+          else
+            dummy=sprintf("%s", substring(eingaben,5));
+            for (j=6:eing_num)
+              dummy=sprintf("%s %s",dummy,substring(eingaben,j));
+            end;
+            macro{get_macro_num(substring(eingaben,3))}.command{str2num(substring(eingaben,4))}=dummy;
+          end;
+        end;
+      elseif (strcmp(substring(eingaben,2),"delete"))
+        if ( eing_num < 4)
+          printf("  Syntax: macro delete <macro_num> <command_num>\n");
+        else
+          i=get_macro_num(substring(eingaben,4));
+          if (i==0)
+            printf("  Makro unbekannt\n");
+          else
+            if (length(macro{str2num(substring(eingaben,3))}.command)>i)
+              do
+                macro{str2num(substring(eingaben,3))}.command{i}=macro{str2num(substring(eingaben,3))}.command{i+1};
+                i++;
+              until (i>=length(macro{str2num(substring(eingaben,3))}.command));
+            end;
+            macro{str2num(substring(eingaben,3))}.command{i}="nop";
+            end;
+        end;
+      elseif (strcmp(substring(eingaben,2),"insert"))
+        if ( eing_num < 4)
+          printf("  Syntax: macro insert <macro_num> <command_num> <command (Text)>\n");
+        else
+          dummy=sprintf("%s", substring(eingaben,5));
+          for (j=6:eing_num)
+            dummy=sprintf("%s %s",dummy,substring(eingaben,j));
+          end;
+          i=str2num(substring(eingaben,4));
+          j=length(macro{str2num(substring(eingaben,3))}.command);
+          if (j>i)
+            for k=j+1:-1:i
+              macro{str2num(substring(eingaben,3))}.command{k}=macro{str2num(substring(eingaben,3))}.command{k-1};
+            end;
+            macro{str2num(substring(eingaben,3))}.command{i}=dummy;
+          else
+            macro{str2num(substring(eingaben,3))}.command{j+1}=dummy;
+          end;
+        end;
+      else
+        printf(" Macro command unknown\n");
+      end;
+    else
+      printf("  Syntax: macro command <<arguments>>\n");
+      printf("  command may be one of define, list, save, load\n");
+      printf("  Syntax: macro define name #command1 #command2 ...\n");
+      printf("  mrun <<name>> shall be used for executing a macro\n");
+      printf("  mapply uses a macro for several files\n\n");
+      printf("  All macro functions are saved in macro{i}.xxx. The list is reversely executed.\n");
+    end;
+
+  case{"mrun"}					% Makro ausfuehren. (run name)
+    if ( eing_num == 2 )
+      mak_i = mak_nr+1;
+      do
+        mak_i=mak_i-1;
+      until ( (mak_i==0) || strcmp(macro{mak_i}.name, substring(eingaben,2)) );
+      if (mak_i==0 )
+        printf("  Fehler: Das angegebene Makro ist nicht definiert\n");
+      else
+              add_to_history("rem START MACRO");
+        for k=1:length(macro{mak_i}.command)
+          add_to_history(macro{mak_i}.command{k});
+          % printf("Will execute: %s\n",macro{i}.command{k});
+        end;
+        add_to_history("rem END MACRO");
+      end;
+    elseif
+      printf("  Name des Makros erforderlich.\n  Syntax: run name\n");
+    end;
+
+  case {"mapply" }
+    if ( eing_num==2 )
+      i_mak = mak_nr+1;
+      do
+        i_mak=i_mak-1;
+      until ( (i_mak==0) || strcmp(macro{i_mak}.name, substring(eingaben,2)) );
+      if ( i_mak==0 )
+        printf("  Fehler: Das angegebene Makro ist nicht definiert\n");
+      else														% Makro ist da. Dateien laden und ausfuehren
+        %macro_file_list = file_selection("Files to work on","multiple",sprintf("%s/",pwd()));
+        [dummyname, dummypath] = uigetfile("*","Select Files to work on",".","MultiSelect","On")
+        if iscell(dummyname)
+          for im=1:length(dummyname)
+            macro_file_list{im} = sprintf("%s%s",dummypath, dummyname{im});
+          endfor
+        endif
+
+        for i_file=1:length(macro_file_list)
+          dummy = sprintf("load 3ddata %s\n", macro_file_list{i_file});	% Funktioniert so nicht....
+          if ( ispc()==0 ), dummy(length(dummy))=[]; end;
+          add_to_history(dummy);
+          for k=1:length(macro{i_mak}.command)
+            add_to_history(macro{i_mak}.command{k});
+            % printf("Will execute: %s\n",macro{i}.command{k});
+          end;
+        end;
+      end;
+    else
+      printf("  Syntax: mapply <macroname>\n");
+    end;
+
   case {"*" }			% Angegebenes Spektrum waehlen
-	if ( eing_num == 2 )
-	    i = str2num(substring(eingaben,2));
-	    if ( (i>0) && (i <= length(timevec)) )
-		select = i;
-		figure (FIG);
-		clf();
-		plot(freqvec, mdata(:,select));
-	    else
-		printf("  Angabe ausserhalb des gültigen Bereiches\n");
-	    end;
-	else
-	    printf("  Aktuell ausgewaehlt: #%d (%f)\n", select, timevec(select));
-	    printf("  Bitte eine Nummer angeben\n");
-	end;
+    if ( eing_num == 2 )
+        i = str2num(substring(eingaben,2));
+        if ( (i>0) && (i <= length(timevec)) )
+      select = i;
+      figure (FIG);
+      clf();
+      plot(freqvec, mdata(:,select));
+        else
+      printf("  Angabe ausserhalb des gültigen Bereiches\n");
+        end;
+    else
+        printf("  Aktuell ausgewaehlt: #%d (%f)\n", select, timevec(select));
+        printf("  Bitte eine Nummer angeben\n");
+    end;
+
   case {"*d"}
-	for i=select:(length(timevec)-1)
-	    timevec(i)=timevec(i+1);
-	    mdata(:,i)=mdata(:,i+1);
-	end;
-	timevec = timevec(1:(length(timevec)-1));
-	mdata = mdata(:,1:(length(timevec)-1));
-  case {"*s" }
-	if ( USE_GUI == 1 )
-		s_filename = inputdlg("Dateiname"){1};
-	else
-		s_filename = input("  Dateiname: ");
-	end
-	ofile = fopen(s_filename,"a");
-	for i=1:length(freqvec)
-		fprintf(ofile,"%f	%f\n", freqvec(i), mdata(freqvec, select));
-	end
-	fclose(ofile);
+    for i=select:(length(timevec)-1)
+        timevec(i)=timevec(i+1);
+        mdata(:,i)=mdata(:,i+1);
+    end;
+    timevec = timevec(1:(length(timevec)-1));
+    mdata = mdata(:,1:(length(timevec)-1));
+    case {"*s" }
+    if ( USE_GUI == 1 )
+      s_filename = inputdlg("Dateiname"){1};
+    else
+      s_filename = input("  Dateiname: ");
+    end
+    ofile = fopen(s_filename,"a");
+    for i=1:length(freqvec)
+      fprintf(ofile,"%f	%f\n", freqvec(i), mdata(freqvec, select));
+    end
+    fclose(ofile);
 
 %___________________________Funktionen für mehrere Datensätze
 
@@ -8134,7 +8181,7 @@ do
 	  end;
 
   case {"#" }			% Speicher xxx als Datei bearbeiten
-    printf("number of entries: %d\n", eing_num);
+    printf("number of entries: %d\n", loaded_files);
     if ( eing_num == 1)
 	    if ( loaded_files == 0 )
 	        printf("  Keine weiteren Dateien geladen\n");
@@ -8691,6 +8738,45 @@ do
 		  figure(str2num(substring(eingaben,2)));
 	  endif
 
+  case {"interpolate"}
+    if (eing_num<=2)
+      printf("  Usage:    interpolate freq/time <factor>\n");
+      printf("  Example:  interpolate freq 2\n");
+      printf("            will interpolate the spectral data in the frequency domain with a spline\n");
+      printf("            function and increase the spectral reolution artificially by factor of 2\n");
+    else
+      put();
+      if (strcmp(substring(eingaben,2),"time"))
+        printf("  not yet implemented");
+      elseif strcmp(substring(eingaben,2),"freq")
+        factor = str2num(substring(eingaben,3));
+        number_of_data_points = length(freqvec);
+        indices_orig = 1:1:number_of_data_points;
+        stepsize = 1/factor;
+        indices_interp = 1:stepsize:number_of_data_points;
+        freqvec_interp = interp1(indices_orig, freqvec, indices_interp); # linear interpolation of frequency axis
+
+        mdata_interp = zeros(length(freqvec_interp), length(timevec));
+
+        for i=1:length(timevec)
+          spec_interp = interp1(freqvec, mdata(:,i), freqvec_interp, "spline");
+          if (LIVE_MODE)
+              fig(FIG_LIVE);
+              plot(freqvec, mdata(:,i), '+', freqvec_interp, spec_interp);
+              plot_label=sprintf("%d/%d: %f", i, length(timevec), timevec(i));
+              legend(plot_label);
+              drawnow();
+          end;
+          mdata_interp(:,i) = spec_interp;
+        endfor
+        mdata = mdata_interp;
+        freqvec = freqvec_interp';
+      else
+        printf("  Usage:    interpolate freq/time <factor>\n");
+      endif
+
+    endif
+
   case {"interpolate_time"}
     if (eing_num==1)
       printf("Usage: interpolate_time <ref_vec>\n");
@@ -9053,9 +9139,6 @@ do
       time_resolution(i-1)=timevec(i)-timevec(i-1);
     end;
     plot(timevec(1:length(freqvec)-1), time_resolution);
-
-  case{"set_time_resolution"}
-
 
   case {"tag"}
       if ( eing_num == 2 )
