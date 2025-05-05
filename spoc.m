@@ -51,7 +51,7 @@ pkg load splines
 %
 %	TODO:
 
-#   - write apropos for: cuspline, timelin, etc.
+#   - write apropos for: cuspline, timelin, interpolate, etc.
 
 %   - konsistent machen fuer alle isfield() Funktionen...
 %   - infofield durch infofield.type, infofield.info etc. ersetzen. genauere informationen speichern
