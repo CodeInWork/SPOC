@@ -8457,23 +8457,24 @@ do
         endif
 
         # make time compatible
-        printf("  Warning: dataset %d will be cropped in time to match %d\n", js1, js2);
-        t1_idx_low = time_get_index(min(time2), time1);
-        t1_idx_high = time_get_index(max(time2), time2);
+        #printf("  Warning: dataset %d will be cropped in time to match %d\n", js1, js2);
+        # t1_idx_low = time_get_index(min(time2), time1);
+        #t1_idx_high = time_get_index(max(time2), time2);#
 
-        time1_overlapp =  time1(t1_idx_low:t1_idx_high);
+        #time1_overlapp =  time1(t1_idx_low:t1_idx_high);
 
         mdata1 = mdata_a{js1};
         mdata2 = mdata_a{js2};
 
-        mdata1_overlapp = mdata1(:, t1_idx_low:t1_idx_high);
-        mdata2_overlapp_comp = interp1(time2, mdata2', time1_overlapp,"extrap");
+        #mdata1_overlapp = mdata1(:, t1_idx_low:t1_idx_high);
+        #mdata2_overlapp_comp = interp1(time2, mdata2', time1_overlapp,"extrap");
 
 
         loaded_files++;
+        freqvec2 = freqvec_a{js2};
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1_overlapp, freqvec_a{js1}, mdata1_overlapp, weight1,
-                                      time2, freqvec_a{js2}, mdata2_overlapp_comp, weight2, joined_freq);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1_overlapp, freq1, mdata1, weight1,
+                                      time2, freqvec2, mdata2, weight2, joined_freq);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
