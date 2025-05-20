@@ -1,4 +1,4 @@
-function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq)
+function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq, blending = "none")
 
 	time_ = time1;
   freq_ = freq;
@@ -12,7 +12,19 @@ function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time
     mdata2_overlapp = mdata2(1:overlap_idx2,:);
     mdata2_overlapp_comp = interp1(freq2(1:overlap_idx2), mdata2_overlapp, freq1(overlap_idx1:end),"extrap");
 
-    overlap_data = (mdata1_overlapp*weight1+mdata2_overlapp_comp*weight2)/(weight1+weight2);
+    if strcmp(blending, "linear")
+      length_overlap = rows(mdata2_overlapp_comp);
+      blend_func_rise = linspace(0,1,length_overlap);
+      blend_func_fall = flip(blend_func_rise);
+
+      blend_weight1 = weight1*blend_func_fall;
+      blend_weight2 = weight2*blend_func_rise;
+      overlap_data = (mdata1_overlapp.*blend_weight1'+mdata2_overlapp_comp.*blend_weight2')./(blend_weight1'+blend_weight2');
+      printf("  Linear blending of overlaping area will be computed.\n");
+    else
+      overlap_data = (mdata1_overlapp*weight1+mdata2_overlapp_comp*weight2)/(weight1+weight2);
+    endif
+
     data2 = mdata2(overlap_idx2+1:end,:);
 
   elseif(min(freq1)>=min(freq2) && max(freq1)>=max(freq2))
@@ -24,7 +36,19 @@ function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time
     mdata2_overlapp = mdata2(overlap_idx2:end,:);
     mdata2_overlapp_comp = interp1(freq2(overlap_idx2:end), mdata2_overlapp, freq1(1:overlap_idx1),"extrap");
 
-    overlap_data = (mdata1_overlapp*weight1+mdata2_overlapp_comp*weight2)/(weight1+weight2);
+    if strcmp(blending, "linear")
+      length_overlap = rows(mdata2_overlapp_comp);
+      blend_func_rise = linspace(0,1,length_overlap);
+      blend_func_fall = flip(blend_func_rise);
+
+      blend_weight1 = weight1*blend_func_fall;
+      blend_weight2 = weight2*blend_func_rise;
+      overlap_data = (mdata1_overlapp.*blend_weight2'+mdata2_overlapp_comp.*blend_weight1')./(blend_weight1'+blend_weight2');
+      printf("  Linear blending of overlaping area will be computed.\n");
+    else
+      overlap_data = (mdata1_overlapp*weight1+mdata2_overlapp_comp*weight2)/(weight1+weight2);
+    endif
+
     data2 = mdata1(overlap_idx1+1:end,:);
   endif;
 

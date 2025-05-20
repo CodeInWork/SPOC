@@ -544,6 +544,12 @@ global BL_SPLINE_PALD2O = [1591,	1610,	1600,
 				1726,	1749,	1739,
 				1736,	1749,	1749];
 
+global BL_SPLINE_1480_1578 = [1480, 1504, 1480,
+        1480, 1510, 1490,
+        1510,	1564,	1540,
+        1564,	1578,	1570,
+        1570,	1578,	1578];
+
 global BL_SPLINE_DESCD2O_old = [1484, 1504, 1494,
         1504,	1524,	1514,
         1591,	1612,	1600,
@@ -2582,7 +2588,7 @@ do
 	    printf("          subtract <nr1> <nr2>     ... Mittelwert abziehen\n");
     end
 
-    case {"filt"}
+  case {"filt"}
     put();
     if ( eing_num == 4 )
 	     filter_order = str2num(substring(eingaben,3));
@@ -3193,8 +3199,28 @@ do
       % make anchor points for linear fit dynamic for different spectroscopic ranges; PF
       BL_LINEAR_1_VAL1 = min(freqvec);
       BL_LINEAR_2_VAL2 = max(freqvec);
-      BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
-      BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+      if (eing_num == 3)
+        dist_low_lim = str2num(substring(eingaben,3));
+        BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
+        if BL_LINEAR_1_VAL2 >= BL_LINEAR_2_VAL2
+          BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+        endif;
+      elseif (eing_num >= 4)
+        dist_low_lim = str2num(substring(eingaben,3));
+        dist_up_lim = str2num(substring(eingaben,4));
+        BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
+        BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-dist_up_lim;
+        if BL_LINEAR_1_VAL2 >= BL_LINEAR_2_VAL2
+          BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+        endif;
+        if BL_LINEAR_2_VAL1 <= BL_LINEAR_1_VAL1
+          BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+        endif
+      else
+        BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+        BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-(BL_LINEAR_2_VAL2-BL_LINEAR_1_VAL1)/10;
+      endif;
+
 	    BL_LINEAR_1_IDX1 = min(get_index(BL_LINEAR_1_VAL1, freqvec),get_index(BL_LINEAR_1_VAL2, freqvec));
 	    BL_LINEAR_1_IDX2 = max(get_index(BL_LINEAR_1_VAL2, freqvec),get_index(BL_LINEAR_1_VAL1, freqvec));
 	    BL_LINEAR_2_IDX1 = min(get_index(BL_LINEAR_2_VAL1, freqvec),get_index(BL_LINEAR_2_VAL2, freqvec));
@@ -3202,14 +3228,8 @@ do
 	    x1=mean([BL_LINEAR_1_VAL1,BL_LINEAR_1_VAL2]);
 	    x2=mean([BL_LINEAR_2_VAL1,BL_LINEAR_2_VAL2]);
 	    dx = x2-x1;
-      if (eing_num >= 3)
-        upperlim = str2num(substring(eingaben,3));
-        upperidx = time_get_index(upperlim, timevec);
-      else
-        upperidx = length(timevec);
-      endif
 
-	    for i=1:upperidx
+	    for i=1:length(mdata(1,:))
         y_fit = mdata(:,i);				% Vereinfachung, Berechnen y=p*x+q
         y1 = mean(y_fit(BL_LINEAR_1_IDX1:BL_LINEAR_1_IDX2));
         y2 = mean(y_fit(BL_LINEAR_2_IDX1:BL_LINEAR_2_IDX2));
@@ -8429,6 +8449,7 @@ do
       js2 = str2num(substring(eingaben,3));
       time1=timevec_a{js1};
       time2=timevec_a{js2};
+      blend_identifier = "none";
 
       if (eing_num==4)
         weight1 = str2num(substring(eingaben,4));
@@ -8436,10 +8457,14 @@ do
       elseif (eing_num>=5)
         weight1 = str2num(substring(eingaben,4));
         weight2 = str2num(substring(eingaben,5));
+        if (eing_num>=6)
+          blend_identifier = substring(eingaben,6);
+        endif
       else
         weight1 = 1;
         weight2 = 1;
       endif
+
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
       if ( min(time1) <= min(time2) && max(time1) >= max(time2))
         # make joined freqvec
@@ -8473,8 +8498,8 @@ do
         loaded_files++;
         freqvec2 = freqvec_a{js2};
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1_overlapp, freq1, mdata1, weight1,
-                                      time2, freqvec2, mdata2, weight2, joined_freq);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1, freq1, mdata1, weight1,
+                                      time2, freqvec2, mdata2, weight2, joined_freq, blend_identifier);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
