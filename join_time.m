@@ -1,4 +1,4 @@
-function [time_, freq_, mdata_] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq)
+function [time_, freq_, mdata_] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2)
 
   mat1 = max(time1);
   mat2 = max(time2);
@@ -63,7 +63,7 @@ function [time_, freq_, mdata_] = join_time(time1, freq1, mdata1, weight1, time2
   endif
 
   time_ = time_join;
-  freq_ = freq;
+  freq_ = freq1;
   mdata_ = [data1, overlap_data, data2];
 
 

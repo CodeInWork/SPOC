@@ -6570,58 +6570,58 @@ do
 	    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
 	    flipx();
       elseif ( strcmp(substring(eingaben,2),"av"))
-		printf("  No command found. \n  Please use the function av instead!\n  Syntax: var=av(starttime,endtime)\n");
+		    printf("  No command found. \n  Please use the function av instead!\n  Syntax: var=av(starttime,endtime)\n");
       elseif ( strcmp(substring(eingaben,2),"dglfit"))
-    	    % über dglfit angepasstes Modell ausgeben
-	    fig(FIG_LSQFIT);
-	    hold off;
-	    clear plotmatrix;
-	    plotmatrix = dglfit_DAT;
-	    plotmatrix(columns(:,(dglfit_DAT+1):2*columns(dglfit_DAT))) = fitmatrix;
-	    % zuerst die gefitteten Daten, dann die Originaldaten
-	    plot(timevec, plotmatrix);
-	    clear dgl_legend;
-    	    for i=1:columns(fitmatrix)
-        	    lsq_legend{i}=sprintf("%s (model)",basename(basespectrum(i).name{1}));
-    	    end;
-    	    for i=1:columns(fitmatrix)
-        	    lsq_legend{columns(fitmatrix)+i}=sprintf("%s (data)",basename(basespectrum(i).name{1}));
-    	    end;
-	    legend(dgl_legend);
-	    xlabel(time_axis);
-	    ylabel("share");
-	    drawnow();
-	    add_to_history("dglfit show");
+    	  % über dglfit angepasstes Modell ausgeben
+        fig(FIG_LSQFIT);
+        hold off;
+        clear plotmatrix;
+        plotmatrix = dglfit_DAT;
+        plotmatrix(columns(:,(dglfit_DAT+1):2*columns(dglfit_DAT))) = fitmatrix;
+        % zuerst die gefitteten Daten, dann die Originaldaten
+        plot(timevec, plotmatrix);
+        clear dgl_legend;
+        for i=1:columns(fitmatrix)
+          lsq_legend{i}=sprintf("%s (model)",basename(basespectrum(i).name{1}));
+        end;
+        for i=1:columns(fitmatrix)
+          lsq_legend{columns(fitmatrix)+i}=sprintf("%s (data)",basename(basespectrum(i).name{1}));
+        end;
+        legend(dgl_legend);
+        xlabel(time_axis);
+        ylabel("share");
+        drawnow();
+        add_to_history("dglfit show");
       elseif ( strcmp(substring(eingaben,2),"lsqfit"))
-    	    % der Fit an Basisspektren ...
-    	    % TODO: hier noch die Basisspektren in separaten plot mit rein!
-    	    % TODO: noch Unterscheiden: Grace mit for-schleife einzeln plotten, gnuplot: alles als 1 Matrix
-    	    fig(FIG_LSQFIT);
-	    subplot(2,1,1);
-    	    hold off;			% for grace-compatibility: Plot all Curves sequentially
-    	    for i=1:columns(fitmatrix)
-		plot(timevec, fitmatrix(:,i));
-		hold on;
-	    end;
-    	    clear lsq_legend;
-    	    for i=1:columns(fitmatrix)
-        	    lsq_legend{i}=sprintf("%s",basename(basespectrum(i).name));
-    	    end;
-    	    legend(lsq_legend);
-	    xlabel(time_axis);
-	    ylabel("share");
-	    printf("  fitmatrix(:,nr) dargestellt\n");
-	    subplot(2,1,2);
-	    for i=1:columns(base_matrix)
-		plot(freqvec, base_matrix(:,i));
-		hold on;
-	    end;
-	    legend(lsq_legend);
-	    xlabel(wavenumber_axis);
-	    ylabel(intensity_axis);
+        % der Fit an Basisspektren ...
+        % TODO: hier noch die Basisspektren in separaten plot mit rein!
+        % TODO: noch Unterscheiden: Grace mit for-schleife einzeln plotten, gnuplot: alles als 1 Matrix
+        fig(FIG_LSQFIT);
+        subplot(2,1,1);
+        hold off;			% for grace-compatibility: Plot all Curves sequentially
+        for i=1:columns(fitmatrix)
+          plot(timevec, fitmatrix(:,i));
+          hold on;
+        end;
+        clear lsq_legend;
+        for i=1:columns(fitmatrix)
+            lsq_legend{i}=sprintf("%s",basename(basespectrum(i).name));
+        end;
+    	  legend(lsq_legend);
+        xlabel(time_axis);
+        ylabel("share");
+        printf("  fitmatrix(:,nr) dargestellt\n");
+        subplot(2,1,2);
+        for i=1:columns(base_matrix)
+          plot(freqvec, base_matrix(:,i));
+          hold on;
+        end;
+        legend(lsq_legend);
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
       elseif ( strcmp(substring(eingaben,2),"scale") )
         if (eing_num==2)
-	  axis();
+	        axis();
 	elseif ( substring(eingaben,3) == "x" )
 	  axis_scale=axis();
 	  axis_scale(1) = str2num(substring(eingaben,4));
@@ -8440,15 +8440,15 @@ do
       end;
     end;
 
-  case {"joinwz"}
+  case {"joincomplete"}
     if (eing_num<3 )							% PF
-      printf("  Usage: joinwz <#1> <#2> [w1 | w2]\n");
+      printf("  Usage: joincomplete <#1> <#2> [w1 | w2]\n");
       printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
     else
+
       js1 = str2num(substring(eingaben,2));
       js2 = str2num(substring(eingaben,3));
-      time1=timevec_a{js1};
-      time2=timevec_a{js2};
+
       blend_identifier = "none";
 
       if (eing_num==4)
@@ -8466,40 +8466,162 @@ do
       endif
 
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
-      if ( min(time1) <= min(time2) && max(time1) >= max(time2))
-        # make joined freqvec
-        freq1 = freqvec_a{js1};
-        if ((max(freqvec_a{js1}) < max(freqvec_a{js2})) && (min(freqvec_a{js1}) > min(freqvec_a{js2})))
-          printf("Data set 2 is complete subset of set 1. Joining is not necessary. Use average <av> instead.");
-        elseif (max(freqvec_a{js1}) <= max(freqvec_a{js2}))
-          freq2_sidx = get_index(max(freqvec_a{js1}), freqvec_a{js2});
-          freq2 = freqvec_a{js2}(freq2_sidx+1:end);
-          joined_freq = [freq1; freq2];
-        elseif (min(freqvec_a{js1}) >= min(freqvec_a{js2}))
-          freq2_eidx = get_index(min(freqvec_a{js1}), freqvec_a{js2});
-          freq2 = freqvec_a{js2}(1:freq2_eidx-1);
-          joined_freq = [freq2; freq1];
+
+      time1 = timevec_a{js1};
+      time2 = timevec_a{js2};
+      freq1 = freqvec_a{js1};
+      freq2 = freqvec_a{js2};
+      mdata1 = mdata_a{js1};
+      mdata2 = mdata_a{js2};
+
+      t1_lo = min(time1);
+      t1_up = max(time1);
+      t2_lo = min(time2);
+      t2_up = max(time2);
+
+      f1_lo = min(freq1);
+      f1_up = max(freq1);
+      f2_lo = min(freq2);
+      f2_up = max(freq2);
+
+      if (t1_up>=t2_up&&t1_lo<=t2_lo)
+        if (f1_up>=f2_up&&f1_lo<=f2_lo)
+          # create new dataset
+          loaded_files++;
+
+          listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
+          [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_complete(time1, freq1, mdata1, weight1,
+                                        time2, freq2, mdata2, weight2, blend_identifier);
+
+          startindex_a{loaded_files} = startindex_a{js1};
+          time_axis_a{loaded_files}=time_axis;
+          wavenumber_axis_a{loaded_files} = wavenumber_axis;
+          infofield_a{loaded_files}.info = sprintf("Joined sets %d and %d\n", js1, js2);
+          printf("  Gespeichert in # %d\n", loaded_files);
+          if ( loaded_files == 1 )
+            number_a = 1;
+          end;
+
+        else
+          printf("  Joining can not be performed. Set 2 mus be a complete frequency subset of 1!\n");
         endif
+      else
+        printf("  Joining can not be performed. Set 2 mus be a complete temporal subset of 1!\n");
+      endif
 
-        # make time compatible
-        #printf("  Warning: dataset %d will be cropped in time to match %d\n", js1, js2);
-        # t1_idx_low = time_get_index(min(time2), time1);
-        #t1_idx_high = time_get_index(max(time2), time2);#
+    endif;
 
-        #time1_overlapp =  time1(t1_idx_low:t1_idx_high);
+  case {"joinwz"}
+    if (eing_num<3 )							% PF
+      printf("  Usage: joinwz <#1> <#2> [w1 | w2]\n");
+      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
+    else
+      js1 = str2num(substring(eingaben,2));
+      js2 = str2num(substring(eingaben,3));
 
+      blend_identifier = "none";
+
+      if (eing_num==4)
+        weight1 = str2num(substring(eingaben,4));
+        weight2 = 1;
+      elseif (eing_num>=5)
+        weight1 = str2num(substring(eingaben,4));
+        weight2 = str2num(substring(eingaben,5));
+        if (eing_num>=6)
+          blend_identifier = substring(eingaben,6);
+        endif
+      else
+        weight1 = 1;
+        weight2 = 1;
+      endif
+
+      printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
+
+      time1 = timevec_a{js1};
+      time2 = timevec_a{js2};
+
+      t1_lo = min(time1);
+      t1_up = max(time1);
+      t2_lo = min(time2);
+      t2_up = max(time2);
+
+      if !( t1_lo > t2_up || t1_up < t2_lo )  # time1 and time2 must have overlap
+        printf("Sets have a temporal overlap, Joining will be performed\n");
+        t1_up_idx = time_get_index(max(time2), time1);
+        t1_lo_idx = time_get_index(min(time2), time1);
+        t2_up_idx = time_get_index(max(time1), time2);
+        t2_lo_idx = time_get_index(min(time1), time2);
+        mdata1 = mdata1(:,t1_lo_idx:t1_up_idx);
+        mdata2 = mdata2(:,t2_lo_idx:t2_up_idx);
+        time1 = time1(t1_lo_idx:t1_up_idx);
+        time2 = time2(t1_lo_idx:t1_up_idx);
+
+        mdata2 = interp1(time2, mdata2', time1, "extrap");
+        # make joined time vec
+        #if (t2_lo<=t1_lo<=t2_up && t1_up>=t2_up)
+          # Set1
+          # -----
+          # | --|--
+          # --|-- |
+          #   |   |
+          #   -----
+          #   Set2
+
+        #elseif (t1_up>=t2_up && t1_lo<=t2_lo)
+          # Set1
+          # -----
+          # | --|-- Set2
+          # | | | |
+          # | --|--
+          # -----
+
+        #elseif (t2_up>=t1_up && t2_lo<=t1_lo)
+          #     Set2
+          # Set1-----
+          #   --|-- |
+          #   | | | |
+          #   --|-- |
+          #     -----
+
+        #elseif (t1_lo<=t2_lo<=t1_up && t2_up>=t1_up)
+          #   Set2
+          #   -----
+          #   |   |
+          # --|-- |
+          # | --|--
+          # |   |
+          # -----
+          # Set1
+        #endif;
+
+        # make joined freqvec
         mdata1 = mdata_a{js1};
         mdata2 = mdata_a{js2};
 
-        #mdata1_overlapp = mdata1(:, t1_idx_low:t1_idx_high);
-        #mdata2_overlapp_comp = interp1(time2, mdata2', time1_overlapp,"extrap");
+        freq1 = freqvec_a{js1};
+        freq2 = freqvec_a{js2};
+
+        if ((max(freqvec_a{js1}) < max(freqvec_a{js2})) && (min(freqvec_a{js1}) > min(freqvec_a{js2})))
+          printf("  Data set 2 is complete frequency subset of set 1; Frequency vector of 1 will be taken.\n");
+          joined_freq = freq1;
+
+        elseif (max(freqvec_a{js1}) <= max(freqvec_a{js2}))
+          freq2_sidx = get_index(max(freqvec_a{js1}), freqvec_a{js2});
+          freq2_overlap = freqvec_a{js2}(freq2_sidx+1:end);
+          joined_freq = [freq1; freq2_overlap];
+        elseif (min(freqvec_a{js1}) >= min(freqvec_a{js2}))
+          freq2_eidx = get_index(min(freqvec_a{js1}), freqvec_a{js2});
+          freq2_overlap = freqvec_a{js2}(1:freq2_eidx-1);
+          joined_freq = [freq2_overlap; freq1];
+        endif
 
 
+        # create new dataset
         loaded_files++;
-        freqvec2 = freqvec_a{js2};
+
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
         [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1, freq1, mdata1, weight1,
-                                      time2, freqvec2, mdata2, weight2, joined_freq, blend_identifier);
+                                      time2, freq2, mdata2, weight2, joined_freq, blend_identifier);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
@@ -8510,7 +8632,8 @@ do
           number_a = 1;
         end;
       else
-        printf("sets cannot be joined. Time vector of set 2 must be a subset of set 1. Cut time of set 2 and try again.\n")
+        printf("  sets cannot be joined. Time vector of set 2 must be a temporal subset of set 1. Cut time of set 2 and try again.\n")
+        printf("  Or use <jointime> instead to join sets in time domain.\n");
       endif;
     endif;
 
@@ -8540,58 +8663,27 @@ do
       mdata1 = mdata_a{js1};
       mdata2 = mdata_a{js2};
 
-      if ( min(freq1) <= min(freq2) && max(freq1) >= max(freq2))    # Set 2 complete subset of 1
-        printf("  Frequency vectors will be made compatibe using linear interpolation.");
-        # make joined freqvec
-        len1 = length(freq1);
-        len2 = length(freq2);
+      f1_lo = min(freq1);
+      f1_up = max(freq1);
+      f2_lo = min(freq2);
+      f2_up = max(freq2);
 
-        if len2 > len1
-          mdata1 = interp1(freq1, mdata1, freq2, "extrap");
-          freq = freq2;
-        else
-          mdata2 = interp1(freq2, mdata2, freq1, "extrap");
-          freq = freq1;
-        endif
 
-      elseif ( min(freq1) <= min(freq2) && max(freq1) <= max(freq2) && max(freq1) >= min(freq2))    # Set 1 lower than 2 with overlap
-        overlap_idx1 = get_index(min(freq2), freq1);
-        overlap_idx2 = get_index(max(freq1), freq2);
-        freq1_overlap = freq1(overlap_idx1:end);
-        freq2_overlap = freq1(1:overlap_idx2);
+      if !(f1_lo > f2_up || f2_lo > f1_up)    # Sets have frequency overlap
+        printf("  Frequency vectors have an overlap, joining will be performed\n");
+        printf("  Set 2 will be interpolated to match 1 in overlap region\n");
 
-        len1 = length(freq1_overlap);
-        len2 = length(freq2_overlap);
+        f1_lo_idx = ir_get_index(f2_lo, freq1);
+        f1_up_idx = ir_get_index(f2_up, freq1);
+        f2_lo_idx = ir_get_index(f1_lo, freq2);
+        f2_up_idx = ir_get_index(f1_up, freq2);
 
-        if len2 > len1
-          mdata1 = interp1(freq1_overlap, mdata1(overlap_idx1:end,:), freq2_overlap, "extrap");
-          mdata2 = mdata2(1:overlap_idx2);
-          freq = freq2_overlap;
-        else
-          mdata1 = mdata1(overlap_idx1:end,:);
-          mdata2 = interp1(freq2_overlap, mdata2(1:overlap_idx2,:), freq1_overlap, "extrap");
-          freq = freq1_overlap;
-        endif
+        mdata1 = mdata1(f1_lo_idx:f1_up_idx,:);
+        mdata2 = mdata2(f2_lo_idx:f2_up_idx,:);
+        freq1 = freq1(f1_lo_idx:f1_up_idx);
+        freq2 = freq2(f2_lo_idx:f2_up_idx);
 
-      elseif ( min(freq2) <= min(freq1) && max(freq2) <= max(freq1) && max(freq2) >= min(freq1))    # Set 2 lower than 1 with overlap
-        overlap_idx1 = get_index(max(freq2), freq1);
-        overlap_idx2 = get_index(min(freq1), freq2);
-        freq1_overlap = freq1(1:overlap_idx1);
-        freq2_overlap = freq1(overlap_idx2:end);
-
-        len1 = length(freq1_overlap);
-        len2 = length(freq2_overlap);
-
-        if len2 > len1
-          mdata1 = interp1(freq1_overlap, mdata1(1:overlap_idx1,:), freq2_overlap, "extrap");
-          mdata2 = mdata2(overlap_idx2:end);
-          freq = freq2_overlap;
-        else
-          mdata1 = mdata1(1:overlap_idx1,:);
-          mdata2 = interp1(freq2_overlap, mdata2(overlap_idx2:end,:), freq1_overlap, "extrap");
-          freq = freq1_overlap;
-        endif
-
+        mdata2 = interp1(freq1, mdata1, freq2);
 
       else
         printf("  Sets cannot be joined. Frequency vectors must have an overlap.\n")
@@ -8606,7 +8698,7 @@ do
 
         loaded_files++;
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2, freq);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
