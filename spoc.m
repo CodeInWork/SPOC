@@ -8546,7 +8546,11 @@ do
       t2_up = max(time2);
 
       if !( t1_lo > t2_up || t1_up < t2_lo )  # time1 and time2 must have overlap
-        printf("Sets have a temporal overlap, Joining will be performed\n");
+        printf("  Sets have a temporal overlap, Joining will be performed\n");
+
+        mdata1 = mdata_a{js1};
+        mdata2 = mdata_a{js2};
+
         t1_up_idx = time_get_index(max(time2), time1);
         t1_lo_idx = time_get_index(min(time2), time1);
         t2_up_idx = time_get_index(max(time1), time2);
@@ -8554,7 +8558,7 @@ do
         mdata1 = mdata1(:,t1_lo_idx:t1_up_idx);
         mdata2 = mdata2(:,t2_lo_idx:t2_up_idx);
         time1 = time1(t1_lo_idx:t1_up_idx);
-        time2 = time2(t1_lo_idx:t1_up_idx);
+        time2 = time2(t2_lo_idx:t2_up_idx);
 
         mdata2 = interp1(time2, mdata2', time1, "extrap");
         # make joined time vec
