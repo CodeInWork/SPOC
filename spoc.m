@@ -6622,83 +6622,115 @@ do
       elseif ( strcmp(substring(eingaben,2),"scale") )
         if (eing_num==2)
 	        axis();
-	elseif ( substring(eingaben,3) == "x" )
-	  axis_scale=axis();
-	  axis_scale(1) = str2num(substring(eingaben,4));
-	  axis_scale(2) = str2num(substring(eingaben,5));
-	  axis(axis_scale);
-	elseif ( substring(eingaben,3) == "y" )
-	  axis_scale=axis();
-	  axis_scale(3) = str2num(substring(eingaben,4));
-	  axis_scale(4) = str2num(substring(eingaben,5));
-	  axis(axis_scale);
-	endif;
+        elseif ( substring(eingaben,3) == "x" )
+          axis_scale=axis();
+          axis_scale(1) = str2num(substring(eingaben,4));
+          axis_scale(2) = str2num(substring(eingaben,5));
+          axis(axis_scale);
+        elseif ( substring(eingaben,3) == "y" )
+          axis_scale=axis();
+          axis_scale(3) = str2num(substring(eingaben,4));
+          axis_scale(4) = str2num(substring(eingaben,5));
+          axis(axis_scale);
+        endif;
 
       elseif ( strcmp(substring(eingaben,2),"avg") )		% plot_avg
-    	if (eing_num==2)
-    		printf("  Syntax: plot avg starttime stoptime\n");
-    	else
-		if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
-		% hold off;
-		% num_to_plot = eing_num - 2;
-		% offset=0.0;
-		first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
-		last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
-		% printf("  Plotte Mittelwert Index %d - %d\n", first_index, last_index);
-		plot_label = sprintf("-;ave time %f-%f;%s",timevec(first_index),timevec(last_index),DEFAULT_COLOR);
-		plot(freqvec, (sum(mdata(:,first_index:last_index),2)./(last_index-first_index+1)), plot_label);
-		xlabel(wavenumber_axis);
-		ylabel(intensity_axis);
-		%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-		flipx();
-    	endif;
+        if (eing_num<4)
+          printf("  Syntax: plot avg starttime stoptime\n");
+        else
+          if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
+          
+          if (eing_num == 6)
+            js1 = str2num(substring(eingaben,5));
+            js2 = str2num(substring(eingaben,6));
+            
+            t_lo = str2num(substring(eingaben,3));
+            t_up = str2num(substring(eingaben,4));
+            
+            if (t_lo > t_up)
+              temp = t_lo;
+              t_lo = t_up;
+              to_up = temp;
+            endif
+            
+            # first file
+            t1_lo_idx = time_get_index(t_lo, timevec_a{js1});
+            t1_up_idx = time_get_index(t_up, timevec_a{js1});
+            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t1_lo_idx, t1_up_idx, js1);  
+            plot_label1 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js1}(t1_lo_idx),timevec_a{js1}(t1_up_idx), js1,'b');   
+                    
+            # second file
+            t2_lo_idx = time_get_index(t_lo, timevec_a{js2});
+            t2_up_idx = time_get_index(t_up, timevec_a{js2});        
+            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t2_lo_idx, t2_up_idx, js2);               
+            plot_label2 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js2}(t2_lo_idx),timevec_a{js2}(t2_up_idx), js2,'r');  
+
+            # plot
+            plot(freqvec_a{js1}, (sum(mdata_a{js1}(:,t1_lo_idx:t1_up_idx),2)./(t1_up_idx-t1_lo_idx+1)), plot_label1,freqvec_a{js2}, (sum(mdata_a{js2}(:,t2_lo_idx:t2_up_idx),2)./(t2_up_idx-t2_lo_idx+1)), plot_label2);
+            %hold on
+            %plot(freqvec_a{js2}, (sum(mdata_a{js2}(:,t2_lo_idx:t2_up_idx),2)./(t2_up_idx-t2_lo_idx+1)), plot_label2);
+            %hold off
+            
+          else
+            first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
+            last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
+            printf("  Plotte Mittelwert Index %d - %d\n", first_index, last_index);
+            plot_label = sprintf("-;ave time %f-%f;%s",timevec(first_index),timevec(last_index),DEFAULT_COLOR);
+            plot(freqvec, (sum(mdata(:,first_index:last_index),2)./(last_index-first_index+1)), plot_label);
+            xlabel(wavenumber_axis);
+            ylabel(intensity_axis);
+          endif;
+          
+        endif;
+          
       elseif ( strcmp(substring(eingaben,2),"diff") )		% plot_diff
-    	if (eing_num==2)
-    		printf("  Syntax: plot diff #t1 #t2\n");
-    	else
-		if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
-		first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
-		last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
-		printf("  Plotte Differenz Index %d - %d\n", first_index, last_index);
-		plot(freqvec, mdata(:, first_index)-mdata(:,last_index));
-		xlabel(wavenumber_axis);
-		ylabel(intensity_axis);
-		%if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-		flipx();
-    	end;
+        if (eing_num<=4)
+          printf("  Syntax: plot diff #t1 #t2\n");
+        else
+          if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
+          first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
+          last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
+          printf("  Plotte Differenz Index %d - %d\n", first_index, last_index);
+          plot(freqvec, mdata(:, first_index)-mdata(:,last_index));
+          xlabel(wavenumber_axis);
+          ylabel(intensity_axis);
+          %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+          flipx();
+        endif;
+        
       elseif ( strcmp(substring(eingaben,2),"exp") || strcmp(substring(eingaben,2),"x") )		% einen Ausdruck plotten, entweder plot exp x y, oder plot exp y,
-		if (eing_num>2)
-			if (eing_num>4)
-				x_temp_vector = eval(substring(eingaben,3));
-				y_temp_vector = eval(substring(eingaben,4));
-				ldummy = substring(eingaben,5);
-			elseif (eing_num>3)
-				x_temp_vector = eval(substring(eingaben,3));
-				y_temp_vector = eval(substring(eingaben,4));
-				ldummy = substring(eingaben,4);
-			else
-				x_temp_vector = freqvec;										% Dann wird automatisch x als freqvec angenommen.
-				y_temp_vector = eval(substring(eingaben,3));
-				ldummy = substring(eingaben,3);
-			end;
-			[x_temp_notion, x_temp_order] = get_axis_notion(x_temp_vector);
-			if (strcmp(x_temp_notion, "time (s)"))
-					x_temp_FIG = FIG_KINETICS;
-			else
-					x_temp_FIG = FIG_SPECTRA;
-			end;
-			if (AUTO_FIGURE==1), fig(x_temp_FIG); end;
-			plot_label = sprintf("-;%s;%s",ldummy,DEFAULT_COLOR);
-			plot(x_temp_vector, y_temp_vector, plot_label);
-			xlabel(x_temp_notion);
-			ylabel("absorbance change");
-			if (x_temp_order == 1)
-					set(gca(),"XDir","reverse");
-			end;
-		else
-			printf("  Syntax: plot exp [x] y [label]\n");
-			printf("	[x] has to be specified if [label] is used\n");
-		endif;
+        if (eing_num>2)
+          if (eing_num>4)
+            x_temp_vector = eval(substring(eingaben,3));
+            y_temp_vector = eval(substring(eingaben,4));
+            ldummy = substring(eingaben,5);
+          elseif (eing_num>3)
+            x_temp_vector = eval(substring(eingaben,3));
+            y_temp_vector = eval(substring(eingaben,4));
+            ldummy = substring(eingaben,4);
+          else
+            x_temp_vector = freqvec;										% Dann wird automatisch x als freqvec angenommen.
+            y_temp_vector = eval(substring(eingaben,3));
+            ldummy = substring(eingaben,3);
+          end;
+          [x_temp_notion, x_temp_order] = get_axis_notion(x_temp_vector);
+          if (strcmp(x_temp_notion, "time (s)"))
+              x_temp_FIG = FIG_KINETICS;
+          else
+              x_temp_FIG = FIG_SPECTRA;
+          end;
+          if (AUTO_FIGURE==1), fig(x_temp_FIG); end;
+          plot_label = sprintf("-;%s;%s",ldummy,DEFAULT_COLOR);
+          plot(x_temp_vector, y_temp_vector, plot_label);
+          xlabel(x_temp_notion);
+          ylabel("absorbance change");
+          if (x_temp_order == 1)
+              set(gca(),"XDir","reverse");
+          end;
+        else
+          printf("  Syntax: plot exp [x] y [label]\n");
+          printf("	[x] has to be specified if [label] is used\n");
+        endif;
       elseif (strcmp(substring(eingaben,2),"c"))
           contour(timevec, freqvec, mdata);
           ylabel(wavenumber_axis);
@@ -8536,7 +8568,7 @@ do
       endif
 
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
-
+     
       time1 = timevec_a{js1};
       time2 = timevec_a{js2};
 
@@ -8547,85 +8579,29 @@ do
 
       if !( t1_lo > t2_up || t1_up < t2_lo )  # time1 and time2 must have overlap
         printf("  Sets have a temporal overlap, Joining will be performed\n");
+        printf("                                                      \n");
+        printf("  Joining scheme:                                     \n");
+        printf("    Set1                                              \n");
+        printf("  ---------                                           \n");
+        printf("  |       |             Joined Set                    \n");        
+        printf("  |   ---------        -------------                  \n");        
+        printf("  |///|///|///|        |///////////|                  \n");  
+        printf("  |///|///|///|   =>   |///////////|  time            \n");
+        printf("  ----|----   |        -------------  ^               \n");
+        printf("      |       |                       |               \n");        
+        printf("      ---------                       |               \n");    
+        printf("        Set2                          ----> frequency \n");
+        printf("                                                      \n");
+        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");     
+        printf("  White spaces will be cropped.\n");        
+          
 
-        mdata1 = mdata_a{js1};
-        mdata2 = mdata_a{js2};
-
-        t1_up_idx = time_get_index(max(time2), time1);
-        t1_lo_idx = time_get_index(min(time2), time1);
-        t2_up_idx = time_get_index(max(time1), time2);
-        t2_lo_idx = time_get_index(min(time1), time2);
-        mdata1 = mdata1(:,t1_lo_idx:t1_up_idx);
-        mdata2 = mdata2(:,t2_lo_idx:t2_up_idx);
-        time1 = time1(t1_lo_idx:t1_up_idx);
-        time2 = time2(t2_lo_idx:t2_up_idx);
-
-        mdata2 = interp1(time2, mdata2', time1, "extrap");
-        # make joined time vec
-        #if (t2_lo<=t1_lo<=t2_up && t1_up>=t2_up)
-          # Set1
-          # -----
-          # | --|--
-          # --|-- |
-          #   |   |
-          #   -----
-          #   Set2
-
-        #elseif (t1_up>=t2_up && t1_lo<=t2_lo)
-          # Set1
-          # -----
-          # | --|-- Set2
-          # | | | |
-          # | --|--
-          # -----
-
-        #elseif (t2_up>=t1_up && t2_lo<=t1_lo)
-          #     Set2
-          # Set1-----
-          #   --|-- |
-          #   | | | |
-          #   --|-- |
-          #     -----
-
-        #elseif (t1_lo<=t2_lo<=t1_up && t2_up>=t1_up)
-          #   Set2
-          #   -----
-          #   |   |
-          # --|-- |
-          # | --|--
-          # |   |
-          # -----
-          # Set1
-        #endif;
-
-        # make joined freqvec
-        mdata1 = mdata_a{js1};
-        mdata2 = mdata_a{js2};
-
-        freq1 = freqvec_a{js1};
-        freq2 = freqvec_a{js2};
-
-        if ((max(freqvec_a{js1}) < max(freqvec_a{js2})) && (min(freqvec_a{js1}) > min(freqvec_a{js2})))
-          printf("  Data set 2 is complete frequency subset of set 1; Frequency vector of 1 will be taken.\n");
-          joined_freq = freq1;
-
-        elseif (max(freqvec_a{js1}) <= max(freqvec_a{js2}))
-          freq2_sidx = get_index(max(freqvec_a{js1}), freqvec_a{js2});
-          freq2_overlap = freqvec_a{js2}(freq2_sidx+1:end);
-          joined_freq = [freq1; freq2_overlap];
-        elseif (min(freqvec_a{js1}) >= min(freqvec_a{js2}))
-          freq2_eidx = get_index(min(freqvec_a{js1}), freqvec_a{js2});
-          freq2_overlap = freqvec_a{js2}(1:freq2_eidx-1);
-          joined_freq = [freq2_overlap; freq1];
-        endif
-
-
-        # create new dataset
+        # create new joined dataset
         loaded_files++;
 
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1, freq1, mdata1, weight1,
-                                      time2, freq2, mdata2, weight2, joined_freq, blend_identifier);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = ir_join_wz(time1, freqvec_a{js1}, mdata_a{js1}, weight1,
+                                      time2, freqvec_a{js2}, mdata_a{js2}, weight2, blend_identifier);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
@@ -8643,12 +8619,14 @@ do
 
   case {"jointime"}
     if (eing_num<3 )							% PF
-      printf("  Usage: join_time <#1> <#2> [w1 | w2]\n");
-      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
+      printf("  Usage: join_time <#1> <#2> [w1 | w2 | linear]\n");
+      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n - <linear> will perform linear blending in time domain\n");
     else
       joinable = 1;
       js1 = str2num(substring(eingaben,2));
       js2 = str2num(substring(eingaben,3));
+
+      blend_identifier = "none";
 
       if (eing_num==4)
         weight1 = str2num(substring(eingaben,4));
@@ -8656,16 +8634,17 @@ do
       elseif (eing_num>=5)
         weight1 = str2num(substring(eingaben,4));
         weight2 = str2num(substring(eingaben,5));
+        if (eing_num>=6)
+          blend_identifier = substring(eingaben,6);
+        endif
       else
         weight1 = 1;
         weight2 = 1;
       endif
 
-      # make freqvecs compatible
+      # check if frequencies have overlap
       freq1 = freqvec_a{js1};
       freq2 = freqvec_a{js2};
-      mdata1 = mdata_a{js1};
-      mdata2 = mdata_a{js2};
 
       f1_lo = min(freq1);
       f1_up = max(freq1);
@@ -8675,34 +8654,27 @@ do
 
       if !(f1_lo > f2_up || f2_lo > f1_up)    # Sets have frequency overlap
         printf("  Frequency vectors have an overlap, joining will be performed\n");
-        printf("  Set 2 will be interpolated to match 1 in overlap region\n");
+        printf("  Sets have a temporal overlap, Joining will be performed\n");
+        printf("                                                      \n");
+        printf("  Joining scheme:                                     \n");
+        printf("    Set1            Joined Sets                       \n");
+        printf("  ---------            -----                          \n");
+        printf("  |    ///|            |///|                          \n");        
+        printf("  |   ---------        |///|                          \n");        
+        printf("  |   |///|   |        |///|                          \n");  
+        printf("  |   |///|   |   =>   |///|    time                  \n");
+        printf("  ----|----   |        |///|    ^                     \n");
+        printf("      |///    |        |///|    |                     \n");        
+        printf("      ---------        -----    |                     \n");    
+        printf("        Set2                     ----> frequency      \n");
+        printf("                                                      \n");
+        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");     
+        printf("  White spaces will be cropped.\n");   
 
-        f1_lo_idx = ir_get_index(f2_lo, freq1);
-        f1_up_idx = ir_get_index(f2_up, freq1);
-        f2_lo_idx = ir_get_index(f1_lo, freq2);
-        f2_up_idx = ir_get_index(f1_up, freq2);
-
-        mdata1 = mdata1(f1_lo_idx:f1_up_idx,:);
-        mdata2 = mdata2(f2_lo_idx:f2_up_idx,:);
-        freq1 = freq1(f1_lo_idx:f1_up_idx);
-        freq2 = freq2(f2_lo_idx:f2_up_idx);
-
-        mdata2 = interp1(freq1, mdata1, freq2);
-
-      else
-        printf("  Sets cannot be joined. Frequency vectors must have an overlap.\n")
-        joinable = 0;
-      endif;
-
-      if joinable
-         # make joined timevec
-        time1 = timevec_a{js1};
-        time2 = timevec_a{js2};
-
-
+        # create new joined dataset
         loaded_files++;
         listenname_a{loaded_files} = sprintf("joined_sets_%d_%d", js1, js2);
-        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(time1, freq1, mdata1, weight1, time2, freq2, mdata2, weight2);
+        [timevec_a{loaded_files}, freqvec_a{loaded_files}, mdata_a{loaded_files}] = join_time(timevec_a{js1}, freq1, mdata_a{js1}, weight1, timevec_a{js2}, freq2, mdata_a{js2}, weight2, blend_identifier);
 
         startindex_a{loaded_files} = startindex_a{js1};
         time_axis_a{loaded_files}=time_axis;
@@ -8712,7 +8684,15 @@ do
         if ( loaded_files == 1 )
           number_a = 1;
         end;
-      endif
+
+      else
+        printf("  Sets cannot be joined. Frequency vectors must have an overlap.\n")
+
+      endif;
+
+
+
+      
 
 
     endif
