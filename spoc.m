@@ -2857,8 +2857,14 @@ do
       freqvec = new_freqvec; mdata = new_mdata;
       clear new_freqvec; clear new_mdata;
     else
-	apropos("cutwz");
-  endif;
+	  apropos("cutwz");
+    endif;
+
+  case {"manifest"}          # writes manipulations on mdata, timevec, and freqvec to the corr. fields
+    printf("  Warning: all manipulations on mdata, freqve, and timevec will be written to the corresponding fields\n")
+    mdata_a{number_a} = mdata;
+    freqvec_a{number_a} = freqvec;
+    timevec_a{number_a} = timevec;
 
   case {"integ"}             %Integration einer Bande über 3D-Datensatz; Paul Fischer
     if (eing_num>=3)
@@ -3197,8 +3203,15 @@ do
 	  case "linear"								% Durch jedes Spektrum eine Gerade,
 	    put();									% Fit nur aus 2 Bereichen
       % make anchor points for linear fit dynamic for different spectroscopic ranges; PF
+      # set defaults:
       BL_LINEAR_1_VAL1 = min(freqvec);
       BL_LINEAR_2_VAL2 = max(freqvec);
+      offset_lo = 0;
+      offset_up = 0;
+      
+      printf("  usage: bl linear [<freq offset low> <freq offset high> <freq endpoint low> <freq endpoint high> <intensity offset low> <intensity offset high>]\n")
+      printf("  if no optional arguments are given, the mean value from the ends of the frequency vector +- 1/10 of the width of the frequency vector will be taken as fit points\n")
+      
       if (eing_num == 3)
         dist_low_lim = str2num(substring(eingaben,3));
         BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
@@ -3208,6 +3221,25 @@ do
       elseif (eing_num >= 4)
         dist_low_lim = str2num(substring(eingaben,3));
         dist_up_lim = str2num(substring(eingaben,4));
+        if (eing_num > 4)
+          freq_lo = str2num(substring(eingaben,5));
+          freq_lo_idx = ir_get_index(freq_lo, freqvec);
+          BL_LINEAR_1_VAL1 = freqvec(freq_lo_idx);
+          if (eing_num > 5)
+            freq_up = str2num(substring(eingaben,6));  
+            freq_up_idx = ir_get_index(freq_up, freqvec);
+            BL_LINEAR_2_VAL2 = freqvec(freq_up_idx);
+            if (eing_num > 6)
+              offset_lo = str2num(substring(eingaben,7));  
+              if (eing_num > 7)
+                offset_up = str2num(substring(eingaben,8));  
+              endif
+            endif
+          else
+            BL_LINEAR_2_VAL2 = freqvec(end);
+          endif
+        endif
+        
         BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
         BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-dist_up_lim;
         if BL_LINEAR_1_VAL2 >= BL_LINEAR_2_VAL2
@@ -3231,8 +3263,8 @@ do
 
 	    for i=1:length(mdata(1,:))
         y_fit = mdata(:,i);				% Vereinfachung, Berechnen y=p*x+q
-        y1 = mean(y_fit(BL_LINEAR_1_IDX1:BL_LINEAR_1_IDX2));
-        y2 = mean(y_fit(BL_LINEAR_2_IDX1:BL_LINEAR_2_IDX2));
+        y1 = mean(y_fit(BL_LINEAR_1_IDX1:BL_LINEAR_1_IDX2))-offset_lo;
+        y2 = mean(y_fit(BL_LINEAR_2_IDX1:BL_LINEAR_2_IDX2))-offset_up;
         dy = y2-y1;
         p = dy / dx;
         q = y1 - p*x1;
@@ -6499,76 +6531,76 @@ do
 		    else
 				printf ("  Syntax: plot fit stddev\n");
 		    endif;
-		elseif ( strcmp(substring(eingaben,3),"values") )
-		    data_to_plot = eing_num - 3;
-		    if ( data_to_plot > 0 )
-		        if ( data_to_plot <= 3)
-		    	    pspalten = data_to_plot;
-			    	pzeilen = 1;
-		    	else
-					pspalten = 3;
-					pzeilen = roundup(data_to_plot/pspalten);
-		        endif;
-				von = 1; bis = data_to_plot;
-				figure (FIG_FIT_KINETICS);
-				hold off;
-				for i=von:bis
-					subplot(pzeilen, pspalten, ((i-von)+1) );
-					[ index_to_plot(i), wz_to_plot(i) ] = ir_get_index( str2num(substring(eingaben,i+3)),  freqvec);
-					plot_label=sprintf("-;%d;1", wz_to_plot(i));
-					plot(timevec, mdata(index_to_plot(i),:),plot_label);
-					hold on;
-					plot_label=sprintf("-;k=%f;3", fit(index_to_plot(i)).parameters(3));
-					plot(timevec, fit(index_to_plot(i)).values,plot_label);
-					xlabel (time_axis);
-					ylabel (intensity_axis);
-					printf("%s",fit(index_to_plot(i)).report);
-					hold off;
-				endfor;
-		    else
-		      	printf("  Syntax: plot fit values wz1 wz2 wz3 ...\n");
-		    endif;
-		else
-		    printf("  Falsche Parameter\n");
-		    apropos("plot");
-		endif;
+          elseif ( strcmp(substring(eingaben,3),"values") )
+              data_to_plot = eing_num - 3;
+              if ( data_to_plot > 0 )
+                  if ( data_to_plot <= 3)
+                    pspalten = data_to_plot;
+                  pzeilen = 1;
+                else
+                pspalten = 3;
+                pzeilen = roundup(data_to_plot/pspalten);
+                  endif;
+              von = 1; bis = data_to_plot;
+              figure (FIG_FIT_KINETICS);
+              hold off;
+              for i=von:bis
+                subplot(pzeilen, pspalten, ((i-von)+1) );
+                [ index_to_plot(i), wz_to_plot(i) ] = ir_get_index( str2num(substring(eingaben,i+3)),  freqvec);
+                plot_label=sprintf("-;%d;1", wz_to_plot(i));
+                plot(timevec, mdata(index_to_plot(i),:),plot_label);
+                hold on;
+                plot_label=sprintf("-;k=%f;3", fit(index_to_plot(i)).parameters(3));
+                plot(timevec, fit(index_to_plot(i)).values,plot_label);
+                xlabel (time_axis);
+                ylabel (intensity_axis);
+                printf("%s",fit(index_to_plot(i)).report);
+                hold off;
+              endfor;
+              else
+                  printf("  Syntax: plot fit values wz1 wz2 wz3 ...\n");
+              endif;
+          else
+              printf("  Falsche Parameter\n");
+              apropos("plot");
+          endif;
 	    else
-		printf("  Fuehren Sie zuerst einen Fit durch!\n");
-		apropos("fit");
+        printf("  Fuehren Sie zuerst einen Fit durch!\n");
+        apropos("fit");
 	    endif;
 
       % Baustelle    TODO
       elseif ( strcmp(substring(eingaben,2),"su"))
-    	    fig(FIG_SPECTRA);
-    	    plot(freqvec, u(:, str2num(substring(eingaben,3) )) );
-	    xlabel(wavenumber_axis);
-	    ylabel(intensity_axis);
-	    flipx();
-	    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+        fig(FIG_SPECTRA);
+        plot(freqvec, u(:, str2num(substring(eingaben,3) )) );
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        flipx();
+        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
 
       elseif ( strcmp(substring(eingaben,2),"ru"))
-    	    fig(FIG_SPECTRA);
-    	    plot(freqvec, u_rot(:, str2num(substring(eingaben,3) )) );
-	    xlabel(wavenumber_axis);
-	    ylabel(intensity_axis);
-	    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-	    flipx();
+        fig(FIG_SPECTRA);
+        plot(freqvec, u_rot(:, str2num(substring(eingaben,3) )) );
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+        flipx();
 
       elseif ( strcmp(substring(eingaben,2),"sk"))
-    	    fig(FIG_KINETICS);
-    	    plot(freqvec, v(:, str2num(substring(eingaben,3) )) );
-	    xlabel(wavenumber_axis);
-	    ylabel(intensity_axis);
-	    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-	    flipx();
+        fig(FIG_KINETICS);
+        plot(freqvec, v(:, str2num(substring(eingaben,3) )) );
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+        flipx();
 
       elseif ( strcmp(substring(eingaben,2),"rk"))
-    	    fig(FIG_KINETICS);
-    	    plot(freqvec, v_rot(:, str2num(substring(eingaben,3) )) );
-	    xlabel(wavenumber_axis);
-	    ylabel(intensity_axis);
-	    %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
-	    flipx();
+        fig(FIG_KINETICS);
+        plot(freqvec, v_rot(:, str2num(substring(eingaben,3) )) );
+        xlabel(wavenumber_axis);
+        ylabel(intensity_axis);
+        %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
+        flipx();
       elseif ( strcmp(substring(eingaben,2),"av"))
 		    printf("  No command found. \n  Please use the function av instead!\n  Syntax: var=av(starttime,endtime)\n");
       elseif ( strcmp(substring(eingaben,2),"dglfit"))
@@ -6640,7 +6672,26 @@ do
         else
           if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
           
-          if (eing_num == 6)
+          if (eing_num==5)
+            if ( strcmp(substring(eingaben,5),"log") )
+              t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
+              t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
+              
+              t_lo = timevec(t_lo_idx);
+              t_up = timevec(t_up_idx);
+              
+              nt = length(timevec(t_lo_idx:t_up_idx));
+              
+              weights=logspace(log10(t_lo), log10(t_up), nt);
+              
+              printf("  Plotting averaged indices applying logarithmic weights %d - %d\n", t_lo_idx, t_up_idx);
+              plot_label = sprintf("-;avg time log weight %f-%f;%s",timevec(t_lo_idx),timevec(t_up_idx),DEFAULT_COLOR);
+              plot(freqvec, (sum((mdata(:,t_lo_idx:t_up_idx).*weights),2)./sum(weights)), plot_label);
+              xlabel(wavenumber_axis);
+              ylabel(intensity_axis);
+            endif;
+          
+          elseif (eing_num == 6)
             js1 = str2num(substring(eingaben,5));
             js2 = str2num(substring(eingaben,6));
             
@@ -6652,6 +6703,7 @@ do
               t_lo = t_up;
               to_up = temp;
             endif
+            
             
             # first file
             t1_lo_idx = time_get_index(t_lo, timevec_a{js1});
@@ -6667,9 +6719,6 @@ do
 
             # plot
             plot(freqvec_a{js1}, (sum(mdata_a{js1}(:,t1_lo_idx:t1_up_idx),2)./(t1_up_idx-t1_lo_idx+1)), plot_label1,freqvec_a{js2}, (sum(mdata_a{js2}(:,t2_lo_idx:t2_up_idx),2)./(t2_up_idx-t2_lo_idx+1)), plot_label2);
-            %hold on
-            %plot(freqvec_a{js2}, (sum(mdata_a{js2}(:,t2_lo_idx:t2_up_idx),2)./(t2_up_idx-t2_lo_idx+1)), plot_label2);
-            %hold off
             
           else
             first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
@@ -7053,20 +7102,40 @@ do
 	    endif;
 	elseif ( strcmp(substring(eingaben,2),"avg") )		% save_avg
 		if ( eing_num < 4 )
-			printf("  Syntax: save avg starttime endtime [name]\n");
+			printf("  Syntax: save avg starttime endtime <log>/[name]\n");
 		else
 			if (eing_num < 5)
 				first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
 				last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
 				fname_dummy = sprintf("%s_AVG_%d-%d.dat", basename(listenname), first_index, last_index);
-			else
-				first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
-				last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
-				fname_dummy = substring(eingaben,5);
+        
+        printf("  Save averaged indices %d - %d with linear weights\n", t_lo_idx, t_up_idx);
+        savevec = (sum(mdata(:,first_index:last_index),2)./(last_index-first_index+1));
+			  save_ir_file(fname_dummy, freqvec, savevec);
+        
+      elseif (eing_num>=5)
+        if ( strcmp(substring(eingaben,5),"log") )
+          t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
+          t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
+          
+          t_lo = timevec(t_lo_idx);
+          t_up = timevec(t_up_idx);
+          
+          nt = length(timevec(t_lo_idx:t_up_idx));
+          
+          weights=logspace(log10(t_lo), log10(t_up), nt);
+          
+			    printf("  Save averaged indices %d - %d with logarithmic weights\n", t_lo_idx, t_up_idx);
+          savevec = sum((mdata(:,t_lo_idx:t_up_idx).*weights),2)./sum(weights);
+          
+          fname_dummy = sprintf("%s_AVG_logW_%d-%d.dat", basename(listenname), first_index, last_index);
+          save_ir_file(fname_dummy, freqvec, savevec);
+         
+        endif; 
+        
 			end;
-			printf("  Speichere gemittelt Index %d - %d\n", first_index, last_index);
-			savevec = (sum(mdata(:,first_index:last_index),2)./(last_index-first_index+1));
-			save_ir_file(fname_dummy, freqvec, savevec);
+
+
 		endif;
 	elseif ( strcmp(substring(eingaben,2),"kin") )
 	    if (eing_num < 3)
