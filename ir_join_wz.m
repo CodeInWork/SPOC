@@ -17,11 +17,8 @@ function [time_, freq_, mdata_] = ir_join_wz(time1, freq1, mdata1, weight1, time
     time2 = time2(t2_lo_idx:t2_up_idx);
 
     mdata2 = interp1(time2, mdata2', time1, "extrap")';
-    time_ = time1(t1_lo_idx:t1_up_idx);
-  else
-    time_ = time1;
   endif;
-
+  time_ = time1;
   
   f1_lo = min(freq1);
   f1_up = max(freq1);

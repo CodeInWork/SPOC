@@ -7105,12 +7105,12 @@ do
 			printf("  Syntax: save avg starttime endtime <log>/[name]\n");
 		else
 			if (eing_num < 5)
-				first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
-				last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
-				fname_dummy = sprintf("%s_AVG_%d-%d.dat", basename(listenname), first_index, last_index);
+				t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
+				t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
+				fname_dummy = sprintf("%s_AVG_%d-%d.dat", basename(listenname), t_lo_idx, t_up_idx);
         
         printf("  Save averaged indices %d - %d with linear weights\n", t_lo_idx, t_up_idx);
-        savevec = (sum(mdata(:,first_index:last_index),2)./(last_index-first_index+1));
+        savevec = (sum(mdata(:,t_lo_idx:t_up_idx),2)./(t_up_idx-t_lo_idx+1));
 			  save_ir_file(fname_dummy, freqvec, savevec);
         
       elseif (eing_num>=5)
@@ -8614,8 +8614,8 @@ do
 
   case {"joinwz"}
     if (eing_num<3 )							% PF
-      printf("  Usage: joinwz <#1> <#2> [w1 | w2]\n");
-      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n");
+      printf("  Usage: joinwz <#1> <#2> [w1 | w2 | linear]\n");
+      printf("  Joins data sets #1 und #2\n   w1 - statistical weight of set 1\n w2 - statistical weight of set 2. If omitted, w1 will be relative to w2\n linear - will perform linear blening of data sets\n");
     else
       js1 = str2num(substring(eingaben,2));
       js2 = str2num(substring(eingaben,3));
