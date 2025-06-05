@@ -8640,22 +8640,30 @@ do
      
       time1 = timevec_a{js1};
       time2 = timevec_a{js2};
+      
+      freq1 = freqvec_a{js1};
+      freq2 = freqvec_a{js2};
+      
+      f1_lo = min(freq1);
+      f1_up = max(freq1);
+      f2_lo = min(freq2);
+      f2_up = max(freq2)
 
       t1_lo = min(time1);
       t1_up = max(time1);
       t2_lo = min(time2);
       t2_up = max(time2);
 
-      if !( t1_lo > t2_up || t1_up < t2_lo )  # time1 and time2 must have overlap
-        printf("  Sets have a temporal overlap, Joining will be performed\n");
+      if !( t1_lo > t2_up || t1_up < t2_lo ) || !(f1_lo > f2_up || f1_up < f2_lo)  # times and frequencies must have overlap
+        printf("  Sets have overlap in time and frequency, Joining will be performed\n");
         printf("                                                      \n");
         printf("  Joining scheme:                                     \n");
         printf("    Set1                                              \n");
         printf("  ---------                                           \n");
         printf("  |       |             Joined Set                    \n");        
         printf("  |   ---------        -------------                  \n");        
-        printf("  |///|///|///|        |///////////|                  \n");  
-        printf("  |///|///|///|   =>   |///////////|  time            \n");
+        printf("  |///|XXX|///|        |///////////|                  \n");  
+        printf("  |///|XXX|///|   =>   |///////////|  time            \n");
         printf("  ----|----   |        -------------  ^               \n");
         printf("      |       |                       |               \n");        
         printf("      ---------                       |               \n");    
@@ -8730,8 +8738,8 @@ do
         printf("  ---------            -----                          \n");
         printf("  |    ///|            |///|                          \n");        
         printf("  |   ---------        |///|                          \n");        
-        printf("  |   |///|   |        |///|                          \n");  
-        printf("  |   |///|   |   =>   |///|    time                  \n");
+        printf("  |   |XXX|   |        |///|                          \n");  
+        printf("  |   |XXX|   |   =>   |///|    time                  \n");
         printf("  ----|----   |        |///|    ^                     \n");
         printf("      |///    |        |///|    |                     \n");        
         printf("      ---------        -----    |                     \n");    
