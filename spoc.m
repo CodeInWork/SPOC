@@ -3401,7 +3401,7 @@ do
       endif
 
     case "lastspec"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
-      if (eing_num == 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
+      if (eing_num >= 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
         put()
         norm1 = str2num(substring(eingaben,3));
         norm2 = str2num(substring(eingaben,4));
@@ -3411,12 +3411,18 @@ do
         if ( inorm1>inorm2 )
           h=inorm1; inorm1=inorm2;inorm2=h;
         end;
+        
+        if (eing_num >= 5)
+          dist = str2num(substring(eingaben,5));
+        else
+          dist = 0;
+        endif
       else
         inorm1 = 1;
         inorm2 = length(freqvec);
       endif
 
-      lastspec = mdata(:,length(timevec));
+      lastspec = mdata(:,length(timevec)-dist:length(timevec));
 
       % fit des Korrekturspektrums (Luftwasser etc.) an Datensatz.
       % fitfunction is a*x+b
@@ -7138,21 +7144,21 @@ do
 
 		endif;
 	elseif ( strcmp(substring(eingaben,2),"kin") )
-	    if (eing_num < 3)
-		printf("  Syntax: save kin <nr> [<name>]\n");
-	    else
-	        [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
-		if ( eing_num < 4)
-			dummy = sprintf("%s_KIN_%f.kin", basename(listenname), von_wz);
-		else
-			dummy = substring(eingaben,4);
-		end;
-		filedesc = fopen(dummy,"w");
-		for i=1:length(timevec)
-		    fprintf(filedesc,"%f %f\n", timevec(i), mdata(von_index,i));
-		endfor;
-		fclose(filedesc);
-	    endif;
+	  if (eing_num < 3)
+		  printf("  Syntax: save kin <nr> [<name>]\n");
+	  else
+	    [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
+      if ( eing_num < 4)
+        dummy = sprintf("%s_KIN_%f.dat", basename(listenname), von_wz);
+      else
+			  dummy = substring(eingaben,4);
+		  end;
+      filedesc = fopen(dummy,"w");
+      for i=1:length(timevec)
+        fprintf(filedesc,"%f\t%f\n", timevec(i), mdata(von_index,i));
+      endfor;
+      fclose(filedesc);
+	   endif;
 	elseif ( strcmp(substring(eingaben,2),"v") )
 	    if ( eing_num == 4 )
 		save_ir_file( substring(eingaben,4), timevec, v(:, str2num( substring(eingaben,3)  )) );
