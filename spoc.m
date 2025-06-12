@@ -3115,7 +3115,7 @@ do
 	    end;
 	    baseline_info=sprintf("Absorbance (Blank: %f-%f [Specs: %d-%d])", PRE_TIME_START, PRE_TIME, index_start, index_stop);
 
-    case "timelin"
+    case "timelin"    # fit linear equation for each spectral point; default values are the reaction start index and the endpoint in time domain
       put();
       index_start = REACTION_START_INDEX;
       if eing_num ==3
@@ -3126,7 +3126,7 @@ do
       else
         index_stop = length(timevec);
       endif
-      for i=1:length(timevec)
+      for i=1:length(freqvec)
         lincorr=interp1([timevec(index_start),timevec(index_stop)], [mdata(i,index_start),mdata(i,index_stop)], timevec);
         if (LIVE_MODE)
             fig(FIG_LIVE);
@@ -3208,10 +3208,10 @@ do
       BL_LINEAR_2_VAL2 = max(freqvec);
       offset_lo = 0;
       offset_up = 0;
-      
+
       printf("  usage: bl linear [<freq offset low> <freq offset high> <freq endpoint low> <freq endpoint high> <intensity offset low> <intensity offset high>]\n")
       printf("  if no optional arguments are given, the mean value from the ends of the frequency vector +- 1/10 of the width of the frequency vector will be taken as fit points\n")
-      
+
       if (eing_num == 3)
         dist_low_lim = str2num(substring(eingaben,3));
         BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
@@ -3226,20 +3226,20 @@ do
           freq_lo_idx = ir_get_index(freq_lo, freqvec);
           BL_LINEAR_1_VAL1 = freqvec(freq_lo_idx);
           if (eing_num > 5)
-            freq_up = str2num(substring(eingaben,6));  
+            freq_up = str2num(substring(eingaben,6));
             freq_up_idx = ir_get_index(freq_up, freqvec);
             BL_LINEAR_2_VAL2 = freqvec(freq_up_idx);
             if (eing_num > 6)
-              offset_lo = str2num(substring(eingaben,7));  
+              offset_lo = str2num(substring(eingaben,7));
               if (eing_num > 7)
-                offset_up = str2num(substring(eingaben,8));  
+                offset_up = str2num(substring(eingaben,8));
               endif
             endif
           else
             BL_LINEAR_2_VAL2 = freqvec(end);
           endif
         endif
-        
+
         BL_LINEAR_1_VAL2 = BL_LINEAR_1_VAL1+dist_low_lim;
         BL_LINEAR_2_VAL1 = BL_LINEAR_2_VAL2-dist_up_lim;
         if BL_LINEAR_1_VAL2 >= BL_LINEAR_2_VAL2
@@ -3438,10 +3438,10 @@ do
         mdata(:,i) = corrspec;
       endfor
 
-    case "trace"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
+    case "trace"            % takes timetrace and fits it on each spectral point to remove drifts homogenous over the dataset in time    PF
       if (eing_num>=3)
 
-        if (eing_num == 3)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
+        if (eing_num == 3)    % area in which fit is conducted
           put()
           norm1 = str2num(substring(eingaben,3));
           inorm1=ir_get_index(norm1, freqvec);
@@ -6671,55 +6671,55 @@ do
           printf("  Syntax: plot avg starttime stoptime\n");
         else
           if (AUTO_FIGURE==1), fig(FIG_SPECTRA); end;
-          
+
           if (eing_num==5)
             if ( strcmp(substring(eingaben,5),"log") )
               t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
               t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
-              
+
               t_lo = timevec(t_lo_idx);
               t_up = timevec(t_up_idx);
-              
+
               nt = length(timevec(t_lo_idx:t_up_idx));
-              
+
               weights=logspace(log10(t_lo), log10(t_up), nt);
-              
+
               printf("  Plotting averaged indices applying logarithmic weights %d - %d\n", t_lo_idx, t_up_idx);
               plot_label = sprintf("-;avg time log weight %f-%f;%s",timevec(t_lo_idx),timevec(t_up_idx),DEFAULT_COLOR);
               plot(freqvec, (sum((mdata(:,t_lo_idx:t_up_idx).*weights),2)./sum(weights)), plot_label);
               xlabel(wavenumber_axis);
               ylabel(intensity_axis);
             endif;
-          
+
           elseif (eing_num == 6)
             js1 = str2num(substring(eingaben,5));
             js2 = str2num(substring(eingaben,6));
-            
+
             t_lo = str2num(substring(eingaben,3));
             t_up = str2num(substring(eingaben,4));
-            
+
             if (t_lo > t_up)
               temp = t_lo;
               t_lo = t_up;
               to_up = temp;
             endif
-            
-            
+
+
             # first file
             t1_lo_idx = time_get_index(t_lo, timevec_a{js1});
             t1_up_idx = time_get_index(t_up, timevec_a{js1});
-            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t1_lo_idx, t1_up_idx, js1);  
-            plot_label1 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js1}(t1_lo_idx),timevec_a{js1}(t1_up_idx), js1,'b');   
-                    
+            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t1_lo_idx, t1_up_idx, js1);
+            plot_label1 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js1}(t1_lo_idx),timevec_a{js1}(t1_up_idx), js1,'b');
+
             # second file
             t2_lo_idx = time_get_index(t_lo, timevec_a{js2});
-            t2_up_idx = time_get_index(t_up, timevec_a{js2});        
-            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t2_lo_idx, t2_up_idx, js2);               
-            plot_label2 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js2}(t2_lo_idx),timevec_a{js2}(t2_up_idx), js2,'r');  
+            t2_up_idx = time_get_index(t_up, timevec_a{js2});
+            printf("  Plotte Mittelwert Index %d - %d of file %d\n", t2_lo_idx, t2_up_idx, js2);
+            plot_label2 = sprintf("-;avg %f-%f s file %d;%s",timevec_a{js2}(t2_lo_idx),timevec_a{js2}(t2_up_idx), js2,'r');
 
             # plot
             plot(freqvec_a{js1}, (sum(mdata_a{js1}(:,t1_lo_idx:t1_up_idx),2)./(t1_up_idx-t1_lo_idx+1)), plot_label1,freqvec_a{js2}, (sum(mdata_a{js2}(:,t2_lo_idx:t2_up_idx),2)./(t2_up_idx-t2_lo_idx+1)), plot_label2);
-            
+
           else
             first_index = time_get_index(str2num(substring(eingaben,3)), timevec);
             last_index = time_get_index(str2num(substring(eingaben,4)), timevec);
@@ -6729,9 +6729,9 @@ do
             xlabel(wavenumber_axis);
             ylabel(intensity_axis);
           endif;
-          
+
         endif;
-          
+
       elseif ( strcmp(substring(eingaben,2),"diff") )		% plot_diff
         if (eing_num<=4)
           printf("  Syntax: plot diff #t1 #t2\n");
@@ -6746,7 +6746,7 @@ do
           %if (strcmp(DEFAULT_PLOTTER,"gnuplot")); set(gca,"XDir","reverse"); end;
           flipx();
         endif;
-        
+
       elseif ( strcmp(substring(eingaben,2),"exp") || strcmp(substring(eingaben,2),"x") )		% einen Ausdruck plotten, entweder plot exp x y, oder plot exp y,
         if (eing_num>2)
           if (eing_num>4)
@@ -7108,31 +7108,31 @@ do
 				t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
 				t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
 				fname_dummy = sprintf("%s_AVG_%d-%d.dat", basename(listenname), t_lo_idx, t_up_idx);
-        
+
         printf("  Save averaged indices %d - %d with linear weights\n", t_lo_idx, t_up_idx);
         savevec = (sum(mdata(:,t_lo_idx:t_up_idx),2)./(t_up_idx-t_lo_idx+1));
 			  save_ir_file(fname_dummy, freqvec, savevec);
-        
+
       elseif (eing_num>=5)
         if ( strcmp(substring(eingaben,5),"log") )
           t_lo_idx = time_get_index(str2num(substring(eingaben,3)), timevec);
           t_up_idx = time_get_index(str2num(substring(eingaben,4)), timevec);
-          
+
           t_lo = timevec(t_lo_idx);
           t_up = timevec(t_up_idx);
-          
+
           nt = length(timevec(t_lo_idx:t_up_idx));
-          
+
           weights=logspace(log10(t_lo), log10(t_up), nt);
-          
+
 			    printf("  Save averaged indices %d - %d with logarithmic weights\n", t_lo_idx, t_up_idx);
           savevec = sum((mdata(:,t_lo_idx:t_up_idx).*weights),2)./sum(weights);
-          
+
           fname_dummy = sprintf("%s_AVG_logW_%d-%d.dat", basename(listenname), first_index, last_index);
           save_ir_file(fname_dummy, freqvec, savevec);
-         
-        endif; 
-        
+
+        endif;
+
 			end;
 
 
@@ -8637,7 +8637,7 @@ do
       endif
 
       printf("  Weights are set to w1 = %f and w2 = %f\n", weight1, weight2);
-     
+
       time1 = timevec_a{js1};
       time2 = timevec_a{js2};
 
@@ -8652,18 +8652,18 @@ do
         printf("  Joining scheme:                                     \n");
         printf("    Set1                                              \n");
         printf("  ---------                                           \n");
-        printf("  |       |             Joined Set                    \n");        
-        printf("  |   ---------        -------------                  \n");        
-        printf("  |///|///|///|        |///////////|                  \n");  
+        printf("  |       |             Joined Set                    \n");
+        printf("  |   ---------        -------------                  \n");
+        printf("  |///|///|///|        |///////////|                  \n");
         printf("  |///|///|///|   =>   |///////////|  time            \n");
         printf("  ----|----   |        -------------  ^               \n");
-        printf("      |       |                       |               \n");        
-        printf("      ---------                       |               \n");    
+        printf("      |       |                       |               \n");
+        printf("      ---------                       |               \n");
         printf("        Set2                          ----> frequency \n");
         printf("                                                      \n");
-        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");     
-        printf("  White spaces will be cropped.\n");        
-          
+        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");
+        printf("  White spaces will be cropped.\n");
+
 
         # create new joined dataset
         loaded_files++;
@@ -8728,17 +8728,17 @@ do
         printf("  Joining scheme:                                     \n");
         printf("    Set1            Joined Sets                       \n");
         printf("  ---------            -----                          \n");
-        printf("  |    ///|            |///|                          \n");        
-        printf("  |   ---------        |///|                          \n");        
-        printf("  |   |///|   |        |///|                          \n");  
+        printf("  |    ///|            |///|                          \n");
+        printf("  |   ---------        |///|                          \n");
+        printf("  |   |///|   |        |///|                          \n");
         printf("  |   |///|   |   =>   |///|    time                  \n");
         printf("  ----|----   |        |///|    ^                     \n");
-        printf("      |///    |        |///|    |                     \n");        
-        printf("      ---------        -----    |                     \n");    
+        printf("      |///    |        |///|    |                     \n");
+        printf("      ---------        -----    |                     \n");
         printf("        Set2                     ----> frequency      \n");
         printf("                                                      \n");
-        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");     
-        printf("  White spaces will be cropped.\n");   
+        printf("  Hatched area will be computed, cross hatched area will be averaged according to given weights.\n");
+        printf("  White spaces will be cropped.\n");
 
         # create new joined dataset
         loaded_files++;
@@ -8761,7 +8761,7 @@ do
 
 
 
-      
+
 
 
     endif
