@@ -3401,7 +3401,7 @@ do
       endif
 
     case "lastspec"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
-      if (eing_num == 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
+      if (eing_num >= 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
         put()
         norm1 = str2num(substring(eingaben,3));
         norm2 = str2num(substring(eingaben,4));
@@ -3411,12 +3411,18 @@ do
         if ( inorm1>inorm2 )
           h=inorm1; inorm1=inorm2;inorm2=h;
         end;
+        
+        if (eing_num >= 5)
+          dist = str2num(substring(eingaben,5));
+        else
+          dist = 0;
+        endif
       else
         inorm1 = 1;
         inorm2 = length(freqvec);
       endif
 
-      lastspec = mdata(:,length(timevec));
+      lastspec = mdata(:,length(timevec)-dist:length(timevec));
 
       % fit des Korrekturspektrums (Luftwasser etc.) an Datensatz.
       % fitfunction is a*x+b
@@ -7138,21 +7144,21 @@ do
 
 		endif;
 	elseif ( strcmp(substring(eingaben,2),"kin") )
-	    if (eing_num < 3)
-		printf("  Syntax: save kin <nr> [<name>]\n");
-	    else
-	        [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
-		if ( eing_num < 4)
-			dummy = sprintf("%s_KIN_%f.kin", basename(listenname), von_wz);
-		else
-			dummy = substring(eingaben,4);
-		end;
-		filedesc = fopen(dummy,"w");
-		for i=1:length(timevec)
-		    fprintf(filedesc,"%f %f\n", timevec(i), mdata(von_index,i));
-		endfor;
-		fclose(filedesc);
-	    endif;
+	  if (eing_num < 3)
+		  printf("  Syntax: save kin <nr> [<name>]\n");
+	  else
+	    [von_index, von_wz] = ir_get_index(str2num(substring(eingaben,3)), freqvec);
+      if ( eing_num < 4)
+        dummy = sprintf("%s_KIN_%f.dat", basename(listenname), von_wz);
+      else
+			  dummy = substring(eingaben,4);
+		  end;
+      filedesc = fopen(dummy,"w");
+      for i=1:length(timevec)
+        fprintf(filedesc,"%f\t%f\n", timevec(i), mdata(von_index,i));
+      endfor;
+      fclose(filedesc);
+	   endif;
 	elseif ( strcmp(substring(eingaben,2),"v") )
 	    if ( eing_num == 4 )
 		save_ir_file( substring(eingaben,4), timevec, v(:, str2num( substring(eingaben,3)  )) );
@@ -8640,22 +8646,37 @@ do
 
       time1 = timevec_a{js1};
       time2 = timevec_a{js2};
+      
+      freq1 = freqvec_a{js1};
+      freq2 = freqvec_a{js2};
+      
+      f1_lo = min(freq1);
+      f1_up = max(freq1);
+      f2_lo = min(freq2);
+      f2_up = max(freq2)
 
       t1_lo = min(time1);
       t1_up = max(time1);
       t2_lo = min(time2);
       t2_up = max(time2);
 
-      if !( t1_lo > t2_up || t1_up < t2_lo )  # time1 and time2 must have overlap
-        printf("  Sets have a temporal overlap, Joining will be performed\n");
+      if !( t1_lo > t2_up || t1_up < t2_lo ) || !(f1_lo > f2_up || f1_up < f2_lo)  # times and frequencies must have overlap
+        printf("  Sets have overlap in time and frequency, Joining will be performed\n");
         printf("                                                      \n");
         printf("  Joining scheme:                                     \n");
         printf("    Set1                                              \n");
         printf("  ---------                                           \n");
+<<<<<<< HEAD
         printf("  |       |             Joined Set                    \n");
         printf("  |   ---------        -------------                  \n");
         printf("  |///|///|///|        |///////////|                  \n");
         printf("  |///|///|///|   =>   |///////////|  time            \n");
+=======
+        printf("  |       |             Joined Set                    \n");        
+        printf("  |   ---------        -------------                  \n");        
+        printf("  |///|XXX|///|        |///////////|                  \n");  
+        printf("  |///|XXX|///|   =>   |///////////|  time            \n");
+>>>>>>> 5f91ff16e6e2ebd04dc15ace442276ee7e15c405
         printf("  ----|----   |        -------------  ^               \n");
         printf("      |       |                       |               \n");
         printf("      ---------                       |               \n");
@@ -8728,10 +8749,17 @@ do
         printf("  Joining scheme:                                     \n");
         printf("    Set1            Joined Sets                       \n");
         printf("  ---------            -----                          \n");
+<<<<<<< HEAD
         printf("  |    ///|            |///|                          \n");
         printf("  |   ---------        |///|                          \n");
         printf("  |   |///|   |        |///|                          \n");
         printf("  |   |///|   |   =>   |///|    time                  \n");
+=======
+        printf("  |    ///|            |///|                          \n");        
+        printf("  |   ---------        |///|                          \n");        
+        printf("  |   |XXX|   |        |///|                          \n");  
+        printf("  |   |XXX|   |   =>   |///|    time                  \n");
+>>>>>>> 5f91ff16e6e2ebd04dc15ace442276ee7e15c405
         printf("  ----|----   |        |///|    ^                     \n");
         printf("      |///    |        |///|    |                     \n");
         printf("      ---------        -----    |                     \n");
