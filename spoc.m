@@ -3401,6 +3401,13 @@ do
       endif
 
     case "lastspec"            % nimmt letztes Spektrum von mdata, fittet es an übrigen Datensatz und zieht Resultat ab:     PF
+      printf("  Usage: bl lastspec | [lowfreq] [highfreq] | [lowtime] [hightime]\n");
+      printf("  [lowfreq] [highfreq] define frequency window of spectrum which will be fitted\n");
+      printf("  [lowtime] [hightime] define time window which will be averaged to the fit spectrum\n");
+
+      t_lo_idx = length(timevec);
+      t_up_idx = t_lo_idx;
+
       if (eing_num >= 4)    % area in which fit is conducted to correct for gaseous water. Recommended >1750
         put()
         norm1 = str2num(substring(eingaben,3));
@@ -3411,18 +3418,24 @@ do
         if ( inorm1>inorm2 )
           h=inorm1; inorm1=inorm2;inorm2=h;
         end;
-        
+
         if (eing_num >= 5)
-          dist = str2num(substring(eingaben,5));
-        else
-          dist = 0;
+          t_lo = str2num(substring(eingaben,5));
+          t_lo_idx = time_get_index(t_lo, timevec);
+          if (eing_num >= 6)
+            t_up = str2num(substring(eingaben,6));
+            t_up_idx = time_get_index(t_up, timevec);
+            if ( t_lo_idx>t_up_idx )
+              h=t_lo_idx; t_lo_idx=t_up_idx;t_up_idx=h;
+            end;
+          endif
         endif
       else
         inorm1 = 1;
         inorm2 = length(freqvec);
       endif
 
-      lastspec = mdata(:,length(timevec)-dist:length(timevec));
+      lastspec = mean(mdata(:,t_lo_idx:t_up_idx),2);
 
       % fit des Korrekturspektrums (Luftwasser etc.) an Datensatz.
       % fitfunction is a*x+b
@@ -8646,10 +8659,10 @@ do
 
       time1 = timevec_a{js1};
       time2 = timevec_a{js2};
-      
+
       freq1 = freqvec_a{js1};
       freq2 = freqvec_a{js2};
-      
+
       f1_lo = min(freq1);
       f1_up = max(freq1);
       f2_lo = min(freq2);
@@ -8666,17 +8679,10 @@ do
         printf("  Joining scheme:                                     \n");
         printf("    Set1                                              \n");
         printf("  ---------                                           \n");
-<<<<<<< HEAD
         printf("  |       |             Joined Set                    \n");
         printf("  |   ---------        -------------                  \n");
-        printf("  |///|///|///|        |///////////|                  \n");
-        printf("  |///|///|///|   =>   |///////////|  time            \n");
-=======
-        printf("  |       |             Joined Set                    \n");        
-        printf("  |   ---------        -------------                  \n");        
-        printf("  |///|XXX|///|        |///////////|                  \n");  
+        printf("  |///|XXX|///|        |///////////|                  \n");
         printf("  |///|XXX|///|   =>   |///////////|  time            \n");
->>>>>>> 5f91ff16e6e2ebd04dc15ace442276ee7e15c405
         printf("  ----|----   |        -------------  ^               \n");
         printf("      |       |                       |               \n");
         printf("      ---------                       |               \n");
@@ -8749,17 +8755,10 @@ do
         printf("  Joining scheme:                                     \n");
         printf("    Set1            Joined Sets                       \n");
         printf("  ---------            -----                          \n");
-<<<<<<< HEAD
         printf("  |    ///|            |///|                          \n");
         printf("  |   ---------        |///|                          \n");
-        printf("  |   |///|   |        |///|                          \n");
-        printf("  |   |///|   |   =>   |///|    time                  \n");
-=======
-        printf("  |    ///|            |///|                          \n");        
-        printf("  |   ---------        |///|                          \n");        
-        printf("  |   |XXX|   |        |///|                          \n");  
+        printf("  |   |XXX|   |        |///|                          \n");
         printf("  |   |XXX|   |   =>   |///|    time                  \n");
->>>>>>> 5f91ff16e6e2ebd04dc15ace442276ee7e15c405
         printf("  ----|----   |        |///|    ^                     \n");
         printf("      |///    |        |///|    |                     \n");
         printf("      ---------        -----    |                     \n");
